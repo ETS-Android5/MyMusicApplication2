@@ -8,6 +8,7 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
+
 import androidx.core.app.NotificationCompat;
 import androidx.media.session.MediaButtonReceiver;
 
@@ -24,7 +25,7 @@ public class MediaStyleHelper {
      * @return A pre-built notification with information from the given media session.
      */
     public static NotificationCompat.Builder from(
-            Context context, MediaSessionCompat mediaSession) {
+            Context context, MediaSessionCompat mediaSession,String channel) {
         MediaControllerCompat controller = mediaSession.getController();
         MediaMetadataCompat mediaMetadata = controller.getMetadata();
         MediaDescriptionCompat description = mediaMetadata.getDescription();
@@ -36,6 +37,7 @@ public class MediaStyleHelper {
                 .setSubText(description.getDescription())
                 .setLargeIcon(description.getIconBitmap())
                 .setContentIntent(controller.getSessionActivity())
+                .setChannelId(channel)
                 .setDeleteIntent(
                         MediaButtonReceiver.buildMediaButtonPendingIntent(context, PlaybackStateCompat.ACTION_STOP))
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);

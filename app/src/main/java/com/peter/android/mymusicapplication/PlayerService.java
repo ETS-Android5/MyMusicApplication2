@@ -1,5 +1,7 @@
 package com.peter.android.mymusicapplication;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -9,9 +11,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.AudioManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -27,6 +31,7 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.media.MediaBrowserServiceCompat;
@@ -40,6 +45,7 @@ import hybridmediaplayer.ExoMediaPlayer;
 import hybridmediaplayer.HybridMediaPlayer;
 
 import static android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT;
+import static androidx.core.app.NotificationCompat.PRIORITY_LOW;
 
 public class PlayerService extends MediaBrowserServiceCompat implements AudioManager.OnAudioFocusChangeListener {
 
@@ -177,6 +183,28 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         filter.addAction(Intent.ACTION_SCREEN_ON);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         registerReceiver(screenReceiver, filter);
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void startMyOwnForeground(){
+        String NOTIFICATION_CHANNEL_ID = "com.example.simpleapp";
+        String channelName = "My Background Service";
+        NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
+        chan.setLightColor(Color.BLUE);
+        chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        assert manager != null;
+        manager.createNotificationChannel(chan);
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+        Notification notification = notificationBuilder.setOngoing(true)
+                .setSmallIcon(R.drawable.exo_notification_small_icon)
+                .setContentTitle("App is running in background")
+                .setPriority(NotificationManager.IMPORTANCE_MIN)
+                .setCategory(Notification.CATEGORY_SERVICE)
+                .build();
+        startForeground(2, notification);
     }
 
     @Override
@@ -406,9 +434,21 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
             cover = BitmapFactory.decodeResource(getResources(),
                     coverPlaceholderId);
 
+        //notification
+        String channel;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            channel = createChannel();
+        else {
+            channel = "";
+        }
 
-        NotificationCompat.Builder builder = MediaStyleHelper.from(this, mediaSessionCompat);
 
+        NotificationCompat.Builder builder = MediaStyleHelper.from(this, mediaSessionCompat,channel);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            builder.setCategory(Notification.CATEGORY_SERVICE);
+        }
+
+        builder.setPriority(PRIORITY_LOW);
         builder.setSmallIcon(smallNotificationIconId);
 
         PendingIntent pplayIntent;
@@ -448,6 +488,34 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private synchronized String createChannel() {
+        NotificationManager mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        String name = "snap map fake location ";
+        int importance = NotificationManager.IMPORTANCE_LOW;
+
+        NotificationChannel mChannel = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            mChannel = new NotificationChannel("snap map channel", name, importance);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mChannel.enableLights(true);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mChannel.setLightColor(Color.BLUE);
+        }
+        if (mNotificationManager != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                mNotificationManager.createNotificationChannel(mChannel);
+            }
+        } else {
+            stopSelf();
+        }
+        return "snap map channel";
+    }
+
 
     private void setMediaPlaybackState(int state) {
         long position = (player == null ? 0 : player.getCurrentPosition());
@@ -462,6 +530,8 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
                 .build();
         mediaSessionCompat.setPlaybackState(playbackStateCompat);
     }
+
+Handler exoplayerhandler = new Handler();
 
     private void startUiUpdateThread() {
         if (mainThreadHandler == null) {
@@ -485,8 +555,9 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
                     }
 
                     while (isUpdatingThread && isPrepared) {
-                        guiUpdateIntent.putExtra(ACTUAL_TIME_VALUE_EXTRA, player.getCurrentPosition());
-                        sendBroadcast(guiUpdateIntent);
+                        exoplayerhandler.post(()->{ guiUpdateIntent.putExtra(ACTUAL_TIME_VALUE_EXTRA, player.getCurrentPosition());
+                            sendBroadcast(guiUpdateIntent);});
+
                         try {
                             Thread.sleep(200);
                         } catch (InterruptedException e) {
