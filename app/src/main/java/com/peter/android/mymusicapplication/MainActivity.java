@@ -257,6 +257,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-
+        Intent myService = new Intent(this, PlayerService.class);
+        stopService(myService);
     }
 }
