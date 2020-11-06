@@ -36,9 +36,13 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.media.MediaBrowserServiceCompat;
 import androidx.media.session.MediaButtonReceiver;
+
+import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy;
+import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import java.io.IOException;
 import java.util.List;
 
 import hybridmediaplayer.ExoMediaPlayer;
@@ -107,6 +111,11 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     private MediaSessionCompat mediaSessionCompat;
 
     private MediaSessionCompat.Callback mediaSessionCallback = new MediaSessionCompat.Callback() {
+        @Override
+        public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+            return super.onMediaButtonEvent(mediaButtonEvent);
+        }
+
         @Override
         public void onFastForward() {
             super.onFastForward();
@@ -443,12 +452,12 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         }
 
 
-        NotificationCompat.Builder builder = MediaStyleHelper.from(this, mediaSessionCompat,channel);
+        NotificationCompat.Builder builder = MediaStyleHelper.from(this, mediaSessionCompat);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             builder.setCategory(Notification.CATEGORY_SERVICE);
         }
 
-        builder.setPriority(PRIORITY_LOW);
+//        builder.setPriority(PRIORITY_LOW);
         builder.setSmallIcon(smallNotificationIconId);
 
         PendingIntent pplayIntent;
@@ -616,6 +625,11 @@ Handler exoplayerhandler = new Handler();
         isPrepared = false;
         killPlayer();
         player = new ExoMediaPlayer(this);
+        player.setOnErrorListener((error, player) -> {
+            isPrepared = false;
+            killPlayer();
+            makeNotification();
+        });
 
 
         String[] urls = new String[playlist.getSongs().size()];
@@ -821,4 +835,22 @@ Handler exoplayerhandler = new Handler();
             return PlayerServiceBinder.this;
         }
     }
+
+    LoadErrorHandlingPolicy loadErrorHandlingPolicy = new LoadErrorHandlingPolicy() {
+        @Override
+        public long getBlacklistDurationMsFor(int dataType, long loadDurationMs, IOException exception, int errorCount) {
+            return 0;
+        }
+
+        @Override
+        public long getRetryDelayMsFor(int dataType, long loadDurationMs, IOException exception, int errorCount) {
+            return 0;
+        }
+
+        @Override
+        public int getMinimumLoadableRetryCount(int dataType) {
+            return 0;
+        }
+    };
+
 }
