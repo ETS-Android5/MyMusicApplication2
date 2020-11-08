@@ -311,7 +311,6 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         mediaSessionCompat.setCallback(mediaSessionCallback);
         mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
-        // TODO: 30.06.2017 zastąpić Activity
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 99 /*request code*/,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -592,7 +591,6 @@ Handler exoplayerhandler = new Handler();
         builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentSong.getUrl());
         builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration);
 
-        // TODO: 30.06.2017 zrobić placeholder
         try {
             Bitmap icon;
             if (cover != null)
@@ -609,7 +607,11 @@ Handler exoplayerhandler = new Handler();
     }
 
     private void handleError(Exception exception) {
-        // TODO: 30.06.2017 obsługa błędów
+        isPrepared = false;
+        setMediaPlaybackState(PlaybackStateCompat.STATE_ERROR);
+        killPlayer();
+        cancelNotification();
+        setMediaPlaybackState(PlaybackStateCompat.STATE_NONE);
     }
 
 
@@ -625,12 +627,6 @@ Handler exoplayerhandler = new Handler();
         isPrepared = false;
         killPlayer();
         player = new ExoMediaPlayer(this);
-        player.setOnErrorListener((error, player) -> {
-            isPrepared = false;
-            killPlayer();
-            makeNotification();
-        });
-
 
         String[] urls = new String[playlist.getSongs().size()];
         for (int i = 0; i < urls.length; i++)
@@ -750,13 +746,11 @@ Handler exoplayerhandler = new Handler();
     @Nullable
     @Override
     public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid, @Nullable Bundle rootHints) {
-        // TODO: 30.06.2017 android auto
         return null;
     }
 
     @Override
     public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
-        // TODO: 30.06.2017 android auto
 
     }
 
