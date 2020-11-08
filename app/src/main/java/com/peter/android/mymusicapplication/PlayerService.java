@@ -63,6 +63,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
 
     private static final String EXTRA_PARAM1 = "mediaplayer.patryk.mediaplayerpatryk.PARAM1";
     private static final String EXTRA_PARAM2 = "mediaplayer.patryk.mediaplayerpatryk.PARAM2";
+    private static final String EXTRA_PARAM3 = "mediaplayer.patryk.mediaplayerpatryk.PARAM3";
 
     public final static String LOADING_ACTION = "LOADING_ACTION";
     public final static String LOADED_ACTION = "LOADED_ACTION";
@@ -183,6 +184,14 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         }
     };
 
+    public static void startActionSetPlaylist2(Context context, Playlist playlist, int songPosition) {
+        Intent intent = new Intent(context, PlayerService.class);
+        intent.setAction(ACTION_SET_PLAYLIST);
+        intent.putExtra(EXTRA_PARAM3, playlist);
+        intent.putExtra(EXTRA_PARAM2, songPosition);
+        context.startService(intent);
+    }
+
 
     @Override
     public void onCreate() {
@@ -222,9 +231,9 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
 
         if (intent != null) {
             if (intent.getAction().equals(ACTION_SET_PLAYLIST)) {
-                String playlistName = intent.getStringExtra(EXTRA_PARAM1);
+                Playlist playlist = intent.getParcelableExtra(EXTRA_PARAM3);
                 int songPosition = intent.getIntExtra(EXTRA_PARAM2, 0);
-                handleActionSetPlaylist(playlistName, songPosition);
+                handleActionSetPlaylist(playlist, songPosition);
 
             }
 
@@ -328,6 +337,15 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
 
     private void handleActionSetPlaylist(String playlistName, int songPos) {
         playlist = PlaylistHandler.getPlaylist(this, playlistName);
+        songPosition = songPos;
+        currentSong = playlist.getSongs().get(songPosition);
+        createPlayer(false);
+        updateMediaSessionMetaData();
+        loadCover();
+    }
+
+    private void handleActionSetPlaylist(Playlist playlist, int songPos) {
+        this.playlist = playlist;
         songPosition = songPos;
         currentSong = playlist.getSongs().get(songPosition);
         createPlayer(false);

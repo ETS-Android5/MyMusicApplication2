@@ -40,11 +40,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         playlist = PlaylistHandler.getPlaylist(this, "playlistName");
-        song = playlist.getSongs().get(0);
+        song = playlist.getSongs().get(0);// start with first song
 
 
         if (!isMyServiceRunning(PlayerService.class)) {
-            PlayerService.startActionSetPlaylist(this, playlist.getName(), 0);
+//            PlayerService.startActionSetPlaylist(this, playlist.getName(), 0);
+            PlayerService.startActionSetPlaylist2(this, playlist, 0);
             PlayerService.startActionPlay(this);
         }
 
@@ -158,23 +159,6 @@ public class MainActivity extends AppCompatActivity {
     public void previous(View view) {
         PlayerService.startActionPreviousSong(this);
         PlayerService.startActionSendInfoBroadcast(this);
-    }
-
-    public void testNotification(View view) {
-        final Intent emptyIntent = new Intent();
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 555, emptyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.exo_controls_fastforward)
-                        .setContentTitle("My notification")
-                        .setContentText("Hello World!")
-                        .setContentIntent(pendingIntent);
-
-        mBuilder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
-
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(127, mBuilder.build());
     }
 
     private boolean isMyServiceRunning(Class<?> serviceClass) {
