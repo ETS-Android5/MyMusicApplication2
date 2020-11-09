@@ -1,6 +1,10 @@
 package com.peter.android.mymusicapplication.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
@@ -20,9 +24,13 @@ import com.peter.android.mymusicapplication.Playlist;
 import com.peter.android.mymusicapplication.PlaylistHandler;
 import com.peter.android.mymusicapplication.R;
 import com.peter.android.mymusicapplication.Song;
+import com.peter.android.mymusicapplication.adapters.AudioBlogsRvAdapter;
+import com.peter.android.mymusicapplication.models.AudioPlayerActivityModel;
 import com.squareup.picasso.Picasso;
 
-public class HomeActivity extends AppCompatActivity {
+import java.util.ArrayList;
+
+public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapter.OnItemClicked {
 
     private ImageView ivCover;
     private SeekBar sbProgress;
@@ -34,12 +42,17 @@ public class HomeActivity extends AppCompatActivity {
     private GuiReceiver receiver;
     private Handler handler = new Handler();
     private boolean blockGUIUpdate;
+    private RecyclerView audioBlogRv;
+    private  AudioPlayerActivityModel activityModel = new AudioPlayerActivityModel();
+    private AudioBlogsRvAdapter audioBlogAdapter;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_home);
+        audioBlogRv = findViewById(R.id.rv_audioBlog);
+        setUpRv();
 
         playlist = PlaylistHandler.getPlaylist(this, "playlistName");
         song = playlist.getSongs().get(0);// start with first song
@@ -53,6 +66,16 @@ public class HomeActivity extends AppCompatActivity {
 
         initilizeViews();
     }
+
+    private void setUpRv() {
+        audioBlogAdapter = new AudioBlogsRvAdapter(activityModel.getListOfBlogsUI(),activityModel.currentSelected, this,this);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        audioBlogRv.setLayoutManager(layoutManager);
+        audioBlogRv.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+        audioBlogRv.setItemAnimator(new DefaultItemAnimator());
+        audioBlogRv.setAdapter(audioBlogAdapter);
+    }
+
 
     private void initilizeViews() {
         ivCover = (ImageView) findViewById(R.id.ivCover);
@@ -184,6 +207,11 @@ public class HomeActivity extends AppCompatActivity {
         else
             stringTotalTime = String.format("%02d:%02d", m, s);
         return stringTotalTime;
+    }
+
+    @Override
+    public void onItemClick(View view, int position) {
+
     }
 
     private static class GuiReceiver extends BroadcastReceiver {
