@@ -22,6 +22,7 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
     }
 
@@ -52,6 +53,19 @@ dependencies {
     testCompileOnly('org.jetbrains:annotations:13.0')
     implementation 'com.graphql-java:graphql-java:14.0'
     implementation 'com.android.support:multidex:1.0.3'
-
-
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.0.0'
+    // Navigation
+    implementation "androidx.navigation:navigation-fragment-ktx:2.3.1"
+    implementation "androidx.navigation:navigation-ui-ktx:2.3.1"
+    // Lifecycles
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    // Material Design
+    implementation "com.google.android.material:material:1.2.1"
+    // circle ImageView
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+    // RecyclerView
+    implementation "androidx.recyclerview:recyclerview:$version_recyclerview"
+    //Glide
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
 }

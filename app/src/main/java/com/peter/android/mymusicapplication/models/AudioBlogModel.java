@@ -102,6 +102,10 @@ public class AudioBlogModel  extends Observable implements Parcelable {
         return publishedAt;
     }
 
+    public String getReadableFormat(){
+        return Utils.getReadableFormat(publishedAt);
+    }
+
     public void setPublishedAt(Date publishedAt) {
         this.publishedAt = publishedAt;
         setChanged();

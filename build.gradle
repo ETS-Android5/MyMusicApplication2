@@ -1,7 +1,11 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    ext.kotlin_version = "1.4.10"
-    ext.apollographql_version = "2.4.2"
+    ext {
+        kotlin_version = "1.4.10"
+        apollographql_version = "2.4.2"
+        version_recyclerview = "1.2.0-alpha05"
+    }
+
     repositories {
         google()
         jcenter()
