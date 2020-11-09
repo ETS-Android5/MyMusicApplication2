@@ -27,6 +27,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
+import android.util.Log;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -625,11 +626,10 @@ Handler exoplayerhandler = new Handler();
     }
 
     private void handleError(Exception exception) {
-        isPrepared = false;
-        setMediaPlaybackState(PlaybackStateCompat.STATE_ERROR);
-        killPlayer();
+        startActionPause(getApplicationContext());
+        setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
         cancelNotification();
-        setMediaPlaybackState(PlaybackStateCompat.STATE_NONE);
+        Log.e(PlayerService.class.getName()," "+songPosition+" ");
     }
 
 

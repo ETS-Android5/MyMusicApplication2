@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.apollographql.apollo'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
@@ -21,6 +22,7 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -43,6 +45,13 @@ dependencies {
     implementation "androidx.media:media:1.2.0"
     implementation 'com.github.mkaflowski:HybridMediaPlayer:1.7.16'
     implementation 'com.squareup.picasso:picasso:2.5.2'
+    implementation("com.apollographql.apollo:apollo-runtime:$apollographql_version")
+    implementation ("com.apollographql.apollo:apollo-coroutines-support:$apollographql_version")
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.2.0-rc03'
+    compileOnly('org.jetbrains:annotations:13.0')
+    testCompileOnly('org.jetbrains:annotations:13.0')
+    implementation 'com.graphql-java:graphql-java:14.0'
+    implementation 'com.android.support:multidex:1.0.3'
 
 
 }

@@ -1,9 +1,10 @@
 package com.peter.android.mymusicapplication;
 
-import android.app.Application;
 import android.content.Intent;
 
-public class MyApplication extends Application {
+import androidx.multidex.MultiDexApplication;
+
+public class MyApplication extends MultiDexApplication {
     @Override
     public void onTerminate() {
         super.onTerminate();
