@@ -1,12 +1,48 @@
 package com.peter.android.mymusicapplication.models;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.peter.android.mymusicapplication.LoadSomePostsQuery;
+import com.peter.android.mymusicapplication.Song;
+
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Observable;
 
-public class AudioPlayerActivityModel  extends Observable {
+import hybridmediaplayer.MediaSourceInfo;
+
+public class AudioPlayerActivityModel  extends Observable implements Parcelable {
+    public AudioPlayerActivityModel(){
+        super();
+    }
+    protected AudioPlayerActivityModel(Parcel in) {
+        previousSelected = in.readInt();
+        currentSelected = in.readInt();
+        listOfBlogsUI = in.createTypedArrayList(AudioBlogModel.CREATOR);
+        currentAudioBlog = in.readParcelable(AudioBlogModel.class.getClassLoader());
+        sbProgressValue = in.readInt();
+        tvTimeString = in.readString();
+        tvDurationString = in.readString();
+    }
+
+    public static final Creator<AudioPlayerActivityModel> CREATOR = new Creator<AudioPlayerActivityModel>() {
+        @Override
+        public AudioPlayerActivityModel createFromParcel(Parcel in) {
+            return new AudioPlayerActivityModel(in);
+        }
+
+        @Override
+        public AudioPlayerActivityModel[] newArray(int size) {
+            return new AudioPlayerActivityModel[size];
+        }
+    };
+
+    public String getName(){
+        return "Audio Blog Demo";
+    }
     public int previousSelected = -1;
     public int currentSelected = -1;
     ArrayList<AudioBlogModel> listOfBlogsUI= new ArrayList<>();
@@ -19,12 +55,20 @@ public class AudioPlayerActivityModel  extends Observable {
         return listOfBlogsUI;
     }
 
-    public void setCurrentAudioBlog(AudioBlogModel currentAudioBlog) {
-        if(!this.currentAudioBlog.equals(currentAudioBlog)){
-        this.currentAudioBlog = currentAudioBlog;
-        setChanged();
-        notifyObservers();}
+    public void addToListOfBlogsUI(AudioBlogModel audioBlogModel) {
+        listOfBlogsUI.add(audioBlogModel);
     }
+
+    public void setCurrentAudioBlog(AudioBlogModel currentAudioBlog) {
+        if(currentAudioBlog ==null)
+            return;
+if(this.currentAudioBlog == null || this.currentAudioBlog.equals(currentAudioBlog)) {
+    this.currentAudioBlog = currentAudioBlog;
+    setChanged();
+    notifyObservers();}
+}
+
+
 
     public void setCurrentSelected(int currentSelected) {
         if(this.currentSelected != currentSelected){
@@ -79,5 +123,31 @@ public class AudioPlayerActivityModel  extends Observable {
             setChanged();
             notifyObservers();
         }
+    }
+
+    public List<MediaSourceInfo> getMediaSourceInfoList() {
+
+        ArrayList<MediaSourceInfo> mediaSourceInfoList = new ArrayList<>();
+        for(AudioBlogModel song:listOfBlogsUI){
+            mediaSourceInfoList.add(song.getMediaSourceInfo());
+        }
+
+        return mediaSourceInfoList;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeInt(previousSelected);
+        parcel.writeInt(currentSelected);
+        parcel.writeTypedList(listOfBlogsUI);
+        parcel.writeParcelable(currentAudioBlog, i);
+        parcel.writeInt(sbProgressValue);
+        parcel.writeString(tvTimeString);
+        parcel.writeString(tvDurationString);
     }
 }

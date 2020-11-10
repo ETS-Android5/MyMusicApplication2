@@ -1,4 +1,4 @@
-package com.peter.android.mymusicapplication;
+package com.peter.android.mymusicapplication.utility;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -8,7 +8,8 @@ import java.util.Locale;
 
 public class Utils {
     public static Date getDate(String date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZ", Locale.ENGLISH);
+//                                                          2020-11-08T20:09:26.681745+00:00
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZ", Locale.ENGLISH);
         try {
             return sdf.parse(date);
         } catch (ParseException e) {

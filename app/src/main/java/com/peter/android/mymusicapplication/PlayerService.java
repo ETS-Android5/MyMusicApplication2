@@ -38,10 +38,10 @@ import androidx.core.content.ContextCompat;
 import androidx.media.MediaBrowserServiceCompat;
 import androidx.media.session.MediaButtonReceiver;
 
-import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy;
 import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy;
-import com.squareup.picasso.Callback;
-import com.squareup.picasso.Picasso;
+import com.peter.android.mymusicapplication.activities.HomeActivity;
+import com.peter.android.mymusicapplication.models.AudioBlogModel;
+import com.peter.android.mymusicapplication.models.AudioPlayerActivityModel;
 
 import java.io.IOException;
 import java.util.List;
@@ -50,11 +50,11 @@ import hybridmediaplayer.ExoMediaPlayer;
 import hybridmediaplayer.HybridMediaPlayer;
 
 import static android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT;
-import static androidx.core.app.NotificationCompat.PRIORITY_LOW;
 
 public class PlayerService extends MediaBrowserServiceCompat implements AudioManager.OnAudioFocusChangeListener {
 
     private static final String ACTION_SET_PLAYLIST = "mediaplayer.patryk.mediaplayerpatryk.action.SET_PLAYLIST";
+    private static final String ACTION_SELECT = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_SELECT";
     private static final String ACTION_PLAY = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_PLAY";
     private static final String ACTION_PAUSE = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_PAUSE";
     private static final String ACTION_NEXT = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_NEXT";
@@ -73,6 +73,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     public final static String PLAY_ACTION = "PLAY_ACTION";
     public final static String PAUSE_ACTION = "PAUSE_ACTION";
     public final static String NEXT_ACTION = "NEXT_ACTION";
+    public final static String SELECT_ACTION = "SELECT_ACTION";
     public final static String PREVIOUS_ACTION = "PREVIOUS_ACTION";
     public final static String DELETE_ACTION = "DELETE_ACTION";
     public final static String MINUS_TIME_ACTION = "MINUS_TIME_ACTION";
@@ -92,8 +93,8 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     private PlayerServiceBinder binder = new PlayerServiceBinder();
 
     private ExoMediaPlayer player;
-    private Playlist playlist;
-    private Song currentSong;
+    private AudioPlayerActivityModel playlist;
+    private AudioBlogModel currentAudioBlog;
     int songPosition;
     private final int SKIP_TIME = 10000;
 
@@ -134,7 +135,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         public void onPlay() {
             super.onPlay();
 
-            if (playlist != null && currentSong != null) {
+            if (playlist != null && currentAudioBlog != null) {
                 play();
                 setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
             }
@@ -144,7 +145,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         public void onPause() {
             super.onPause();
 
-            if (playlist != null && currentSong != null) {
+            if (playlist != null && currentAudioBlog != null) {
                 pause();
             }
         }
@@ -152,7 +153,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         @Override
         public void onStop() {
             super.onStop();
-            if (playlist != null && currentSong != null) {
+            if (playlist != null && currentAudioBlog != null) {
                 pause();
             }
         }
@@ -185,14 +186,19 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         }
     };
 
-    public static void startActionSetPlaylist2(Context context, Playlist playlist, int songPosition) {
+    public static void startActionSetPlaylist(Context context, AudioPlayerActivityModel playlist) {
         Intent intent = new Intent(context, PlayerService.class);
         intent.setAction(ACTION_SET_PLAYLIST);
         intent.putExtra(EXTRA_PARAM3, playlist);
-        intent.putExtra(EXTRA_PARAM2, songPosition);
         context.startService(intent);
     }
 
+    public static void startActionSelectAudio(Context context, int songPosition) {
+        Intent intent = new Intent(context, PlayerService.class);
+        intent.setAction(ACTION_SELECT);
+        intent.putExtra(EXTRA_PARAM1, songPosition);
+        context.startService(intent);
+    }
 
     @Override
     public void onCreate() {
@@ -232,10 +238,14 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
 
         if (intent != null) {
             if (intent.getAction().equals(ACTION_SET_PLAYLIST)) {
-                Playlist playlist = intent.getParcelableExtra(EXTRA_PARAM3);
-                int songPosition = intent.getIntExtra(EXTRA_PARAM2, 0);
-                handleActionSetPlaylist(playlist, songPosition);
+                AudioPlayerActivityModel playlist = intent.getParcelableExtra(EXTRA_PARAM3);
+                handleActionSetPlaylist(playlist);
 
+            }
+
+            if(intent.getAction().equals(ACTION_SELECT)){
+                int songPosition = intent.getIntExtra(EXTRA_PARAM1, 0);
+                handleActionSelectSong(songPosition);
             }
 
             if (intent.getAction().equals(ACTION_PLAY)) {
@@ -292,16 +302,16 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     }
 
     private void sendInfoBroadcast() {
-        if (player == null || currentSong == null)
+        if (player == null || currentAudioBlog == null)
             return;
 
 
         Intent updateIntent = new Intent();
         updateIntent.setAction(GUI_UPDATE_ACTION);
-        updateIntent.putExtra(URL_EXTRA, currentSong.getUrl());
-        updateIntent.putExtra(ARTIST_EXTRA, currentSong.getArtist());
-        updateIntent.putExtra(TITLE_EXTRA, currentSong.getTitle());
-        updateIntent.putExtra(COVER_URL_EXTRA, currentSong.getImageUrl());
+        updateIntent.putExtra(URL_EXTRA, currentAudioBlog.getUrl());
+        updateIntent.putExtra(ARTIST_EXTRA, currentAudioBlog.getAudioFileName());
+        updateIntent.putExtra(TITLE_EXTRA, currentAudioBlog.getTitle());
+//        updateIntent.putExtra(COVER_URL_EXTRA, currentAudioBlog.getImageUrl());
         updateIntent.putExtra(ACTUAL_TIME_VALUE_EXTRA, player.getCurrentPosition());
         updateIntent.putExtra(TOTAL_TIME_VALUE_EXTRA, player.getDuration());
         updateIntent.putExtra(SONG_NUM_EXTRA, songPosition);
@@ -321,7 +331,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         mediaSessionCompat.setCallback(mediaSessionCallback);
         mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, HomeActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 99 /*request code*/,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT);
         mediaSessionCompat.setSessionActivity(pi);
@@ -336,29 +346,47 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         setSessionToken(mediaSessionCompat.getSessionToken());
     }
 
-    private void handleActionSetPlaylist(String playlistName, int songPos) {
-        playlist = PlaylistHandler.getPlaylist(this, playlistName);
-        songPosition = songPos;
-        currentSong = playlist.getSongs().get(songPosition);
+//    private void handleActionSetPlaylist(String playlistName, int songPos) {
+//        playlist = PlaylistHandler.getPlaylist(this, playlistName);
+//        songPosition = songPos;
+//        currentAudioBlog = playlist.getSongs().get(songPosition);
+//        createPlayer(false);
+//        updateMediaSessionMetaData();
+//        loadCover();
+//    }
+
+    private void handleActionSetPlaylist(AudioPlayerActivityModel playlist) {
+        this.playlist = playlist;
         createPlayer(false);
-        updateMediaSessionMetaData();
-        loadCover();
     }
 
-    private void handleActionSetPlaylist(Playlist playlist, int songPos) {
-        this.playlist = playlist;
+    private void  handleActionSelectSong(int songPos){
         songPosition = songPos;
-        currentSong = playlist.getSongs().get(songPosition);
-        createPlayer(false);
+        currentAudioBlog = playlist.getListOfBlogsUI().get(songPosition);
         updateMediaSessionMetaData();
         loadCover();
+        selectRandomSong(songPosition);
     }
 
     private void nextSong() {
-        if (player.getExoPlayer().getCurrentWindowIndex() < playlist.getSongs().size()-1) {
+        if (player.getExoPlayer().getCurrentWindowIndex() < playlist.getListOfBlogsUI().size()-1) {
             player.seekTo(player.getExoPlayer().getCurrentWindowIndex() + 1, 0);
             sendBroadcastWithAction(NEXT_ACTION);
         }
+    }
+
+    private void selectRandomSong(int position) {
+        if(player != null){
+            if (player.getExoPlayer().getCurrentWindowIndex() < position){
+                player.seekTo(position, 0);
+            }else if(player.getExoPlayer().getCurrentWindowIndex() > position){
+                player.seekTo(position, 0);
+            }else{
+                seekTo(0);
+            }
+            sendBroadcastWithAction(SELECT_ACTION,position);
+        }
+
     }
 
     private void previousSong(boolean playOnLoaded) {
@@ -371,26 +399,29 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
 
     private void loadCover() {
         final ImageView iv = new ImageView(this);
-
-        if (currentSong.getImageUrl() != null && !currentSong.getImageUrl().isEmpty())
-            Picasso.with(this).load(currentSong.getImageUrl()).placeholder(coverPlaceholderId).into(iv, new Callback() {
-                @Override
-                public void onSuccess() {
-                    cover = ((BitmapDrawable) iv.getDrawable()).getBitmap();
-                    updateMediaSessionMetaData();
-                    makeNotification();
-                }
-
-                @Override
-                public void onError() {
-                    cover = BitmapFactory.decodeResource(getResources(),
-                            coverPlaceholderId);
-                    updateMediaSessionMetaData();
-                    makeNotification();
-
-
-                }
-            });
+        iv.setImageDrawable(ContextCompat.getDrawable(this.getApplicationContext(),R.drawable.exo_icon_circular_play));
+        cover = ((BitmapDrawable)iv.getDrawable()).getBitmap();
+        updateMediaSessionMetaData();
+        makeNotification();
+//        if (currentAudioBlog.getImageUrl() != null && !currentAudioBlog.getImageUrl().isEmpty())
+//            Picasso.with(this).load(currentAudioBlog.getImageUrl()).placeholder(coverPlaceholderId).into(iv, new Callback() {
+//                @Override
+//                public void onSuccess() {
+//                    cover = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+//                    updateMediaSessionMetaData();
+//                    makeNotification();
+//                }
+//
+//                @Override
+//                public void onError() {
+//                    cover = BitmapFactory.decodeResource(getResources(),
+//                            coverPlaceholderId);
+//                    updateMediaSessionMetaData();
+//                    makeNotification();
+//
+//
+//                }
+//            });
     }
 
     private void play() {
@@ -604,10 +635,10 @@ Handler exoplayerhandler = new Handler();
         long duration = (player != null ? player.getDuration() : 180);
 
         MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
-        builder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentSong.getArtist());
-        builder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "SoundCloud");
-        builder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentSong.getTitle());
-        builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentSong.getUrl());
+        builder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentAudioBlog.getAudioFileName());
+        builder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "Unknown");
+        builder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentAudioBlog.getTitle());
+        builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentAudioBlog.getUrl());
         builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration);
 
         try {
@@ -646,9 +677,7 @@ Handler exoplayerhandler = new Handler();
         killPlayer();
         player = new ExoMediaPlayer(this);
 
-        String[] urls = new String[playlist.getSongs().size()];
-        for (int i = 0; i < urls.length; i++)
-            urls[i] = playlist.getSongs().get(i).getUrl();
+
 
         player.setDataSource(playlist.getMediaSourceInfoList());
 
@@ -696,7 +725,7 @@ Handler exoplayerhandler = new Handler();
                 if (songPosition == currentWindowIndex)
                     return;
                 songPosition = currentWindowIndex;
-                currentSong = playlist.getSongs().get(currentWindowIndex);
+                currentAudioBlog = playlist.getListOfBlogsUI().get(currentWindowIndex);
                 loadCover();
                 sendInfoBroadcast();
                 updateMediaSessionMetaData();
@@ -709,6 +738,13 @@ Handler exoplayerhandler = new Handler();
 
     private void sendBroadcastWithAction(String loadingAction) {
         Intent updateIntent = new Intent();
+        updateIntent.setAction(loadingAction);
+        sendBroadcast(updateIntent);
+    }
+
+    private void sendBroadcastWithAction(String loadingAction,int value) {
+        Intent updateIntent = new Intent();
+        updateIntent.putExtra("V",value);
         updateIntent.setAction(loadingAction);
         sendBroadcast(updateIntent);
     }
@@ -778,14 +814,6 @@ Handler exoplayerhandler = new Handler();
             return super.onBind(intent);
         }
         return binder;
-    }
-
-    public static void startActionSetPlaylist(Context context, String playlistName, int songPosition) {
-        Intent intent = new Intent(context, PlayerService.class);
-        intent.setAction(ACTION_SET_PLAYLIST);
-        intent.putExtra(EXTRA_PARAM1, playlistName);
-        intent.putExtra(EXTRA_PARAM2, songPosition);
-        context.startService(intent);
     }
 
     public static void startActionPlay(Context context) {

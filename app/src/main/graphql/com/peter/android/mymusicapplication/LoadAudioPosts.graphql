@@ -1,5 +1,5 @@
 query LoadSomePosts{
-    posts(first: 7,stage: PUBLISHED) {
+    posts(first: 5,stage: PUBLISHED) {
         id
         publishedAt
         title

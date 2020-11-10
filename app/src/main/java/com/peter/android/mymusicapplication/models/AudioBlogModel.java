@@ -4,13 +4,12 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.peter.android.mymusicapplication.LoadSomePostsQuery;
-import com.peter.android.mymusicapplication.Utils;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.peter.android.mymusicapplication.utility.Utils;
 
 import java.util.Date;
 import java.util.Observable;
+
+import hybridmediaplayer.MediaSourceInfo;
 
 public class AudioBlogModel  extends Observable implements Parcelable {
     boolean selected = false;
@@ -28,7 +27,7 @@ public class AudioBlogModel  extends Observable implements Parcelable {
         this.title = post.title();
         this.audioSize = post.audio().size();
         this.audioFileName = post.audio().fileName();
-        this.url = url;
+        this.url = post.audio().url();
     }
 
     public AudioBlogModel(boolean selected, boolean keepListening, String id, Date publishedAt, String title, Double audioSize, String audioFileName, String url) {
@@ -185,5 +184,9 @@ public class AudioBlogModel  extends Observable implements Parcelable {
                 ", audioFileName='" + audioFileName + '\'' +
                 ", url='" + url + '\'' +
                 '}';
+    }
+
+    public MediaSourceInfo getMediaSourceInfo() {
+        return new MediaSourceInfo.Builder().setTitle(title).setUrl(url).isVideo(false).build();
     }
 }

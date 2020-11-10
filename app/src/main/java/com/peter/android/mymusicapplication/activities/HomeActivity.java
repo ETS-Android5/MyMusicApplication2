@@ -13,22 +13,34 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.peter.android.mymusicapplication.MainActivity;
+import com.apollographql.apollo.ApolloCall;
+import com.apollographql.apollo.api.Response;
+import com.apollographql.apollo.exception.ApolloException;
+import com.peter.android.mymusicapplication.LoadSomePostsQuery;
+
 import com.peter.android.mymusicapplication.PlayerService;
 import com.peter.android.mymusicapplication.Playlist;
 import com.peter.android.mymusicapplication.PlaylistHandler;
 import com.peter.android.mymusicapplication.R;
 import com.peter.android.mymusicapplication.Song;
 import com.peter.android.mymusicapplication.adapters.AudioBlogsRvAdapter;
+import com.peter.android.mymusicapplication.apollo.ApolloFactory;
+import com.peter.android.mymusicapplication.models.AudioBlogModel;
 import com.peter.android.mymusicapplication.models.AudioPlayerActivityModel;
 import com.squareup.picasso.Picasso;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapter.OnItemClicked {
 
@@ -37,13 +49,13 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
     private TextView tvTime;
     private TextView tvDuration;
 
-    private Playlist playlist;
-    private Song song;
+
+
     private GuiReceiver receiver;
     private Handler handler = new Handler();
     private boolean blockGUIUpdate;
     private RecyclerView audioBlogRv;
-    private  AudioPlayerActivityModel activityModel = new AudioPlayerActivityModel();
+    private volatile AudioPlayerActivityModel activityModel = new AudioPlayerActivityModel();
     private AudioBlogsRvAdapter audioBlogAdapter;
 
 
@@ -53,17 +65,51 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
         setContentView(R.layout.activity_home);
         audioBlogRv = findViewById(R.id.rv_audioBlog);
         setUpRv();
+        ApolloFactory.getApolloClient().query(LoadSomePostsQuery.builder().build()).enqueue(new ApolloCall.Callback<LoadSomePostsQuery.Data>() {
+            @Override
+            public void onResponse(@NotNull Response<LoadSomePostsQuery.Data> response) {
+                List<LoadSomePostsQuery.Post> audioPosts = Objects.requireNonNull(response.getData()).posts();
+                handler.post(() -> {
+                    for(LoadSomePostsQuery.Post audioPost:audioPosts){
+                        activityModel.addToListOfBlogsUI(new AudioBlogModel(audioPost));
+                        activityModel.setCurrentSelected(0);
+                    }
+                    audioBlogAdapter.notifyDataSetChanged();
 
-        playlist = PlaylistHandler.getPlaylist(this, "playlistName");
-        song = playlist.getSongs().get(0);// start with first song
-
-
-        if (!isMyServiceRunning(PlayerService.class)) {
+                    if (!isMyServiceRunning(PlayerService.class)) {
 //            PlayerService.startActionSetPlaylist(this, playlist.getName(), 0);
-            PlayerService.startActionSetPlaylist2(this, playlist, 0);
-            PlayerService.startActionPlay(this);
-        }
+                        PlayerService.startActionSetPlaylist(HomeActivity.this, activityModel);
+                        PlayerService.startActionSelectAudio(HomeActivity.this, 0);
+//            PlayerService.startActionPlay(this);
+                    }
 
+                    if (receiver == null) {
+                        receiver = new GuiReceiver();
+                        receiver.setPlayerActivity(HomeActivity.this);
+                    }
+
+                    IntentFilter filter = new IntentFilter();
+                    filter.addAction(PlayerService.GUI_UPDATE_ACTION);
+                    filter.addAction(PlayerService.NEXT_ACTION);
+                    filter.addAction(PlayerService.SELECT_ACTION);
+                    filter.addAction(PlayerService.PREVIOUS_ACTION);
+                    filter.addAction(PlayerService.PLAY_ACTION);
+                    filter.addAction(PlayerService.PAUSE_ACTION);
+                    filter.addAction(PlayerService.LOADED_ACTION);
+                    filter.addAction(PlayerService.LOADING_ACTION);
+                    filter.addAction(PlayerService.DELETE_ACTION);
+                    filter.addAction(PlayerService.COMPLETE_ACTION);
+                    registerReceiver(receiver, filter);
+                    PlayerService.startActionSendInfoBroadcast(HomeActivity.this);
+                });
+            }
+
+            @Override
+            public void onFailure(@NotNull ApolloException e) {
+                Log.e("Apolo Error",e.toString());// should we retry ?
+                Toast.makeText(HomeActivity.this,"Connection Error",Toast.LENGTH_SHORT).show();
+            }
+        });
         initilizeViews();
     }
 
@@ -79,24 +125,23 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 
     private void initilizeViews() {
         ivCover = (ImageView) findViewById(R.id.ivCover);
-        Picasso.with(this).load(song.getImageUrl()).fit().centerCrop().into(ivCover);
 
         tvTime = (TextView) findViewById(R.id.tvTime);
         String stringActualTime = String.format("%02d:%02d", 0, 0);
         tvTime.setText(stringActualTime);
 
 
-        long s = song.getDuration() % 60;
-        long m = (song.getDuration() / 60) % 60;
-        long h = song.getDuration() / 3600;
+//        long s = song.getDuration() % 60;
+//        long m = (song.getDuration() / 60) % 60;
+//        long h = song.getDuration() / 3600;
 
-        String stringTotalTime;
-        if (h != 0)
-            stringTotalTime = String.format("%02d:%02d:%02d", h, m, s);
-        else
-            stringTotalTime = String.format("%02d:%02d", m, s);
+//        String stringTotalTime;
+//        if (h != 0)
+//            stringTotalTime = String.format("%02d:%02d:%02d", h, m, s);
+//        else
+//            stringTotalTime = String.format("%02d:%02d", m, s);
         tvDuration = (TextView) findViewById(R.id.tvDuration);
-        tvDuration.setText(stringTotalTime);
+//        tvDuration.setText(stringTotalTime);
 
         sbProgress = (SeekBar) findViewById(R.id.seekBar);
         sbProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -128,24 +173,28 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
     @Override
     protected void onResume() {
         super.onResume();
-        if (receiver == null) {
-            receiver = new GuiReceiver();
-            receiver.setPlayerActivity(this);
+
+
+        if(activityModel.currentSelected != -1) {
+            if (receiver == null) {
+                receiver = new GuiReceiver();
+                receiver.setPlayerActivity(this);
+            }
+
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(PlayerService.GUI_UPDATE_ACTION);
+            filter.addAction(PlayerService.NEXT_ACTION);
+            filter.addAction(PlayerService.SELECT_ACTION);
+            filter.addAction(PlayerService.PREVIOUS_ACTION);
+            filter.addAction(PlayerService.PLAY_ACTION);
+            filter.addAction(PlayerService.PAUSE_ACTION);
+            filter.addAction(PlayerService.LOADED_ACTION);
+            filter.addAction(PlayerService.LOADING_ACTION);
+            filter.addAction(PlayerService.DELETE_ACTION);
+            filter.addAction(PlayerService.COMPLETE_ACTION);
+            registerReceiver(receiver, filter);
+            PlayerService.startActionSendInfoBroadcast(this);
         }
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(PlayerService.GUI_UPDATE_ACTION);
-        filter.addAction(PlayerService.NEXT_ACTION);
-        filter.addAction(PlayerService.PREVIOUS_ACTION);
-        filter.addAction(PlayerService.PLAY_ACTION);
-        filter.addAction(PlayerService.PAUSE_ACTION);
-        filter.addAction(PlayerService.LOADED_ACTION);
-        filter.addAction(PlayerService.LOADING_ACTION);
-        filter.addAction(PlayerService.DELETE_ACTION);
-        filter.addAction(PlayerService.COMPLETE_ACTION);
-        registerReceiver(receiver, filter);
-
-        PlayerService.startActionSendInfoBroadcast(this);
     }
 
     private void setTime(int time) {
@@ -211,6 +260,19 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 
     @Override
     public void onItemClick(View view, int position) {
+        switch (view.getId()){
+            case R.id.layout:
+            case R.id.tvTime:
+            case R.id.tv_date:
+            case R.id.tv_name:
+                PlayerService.startActionPause(this);
+                activityModel.setCurrentSelected(position);
+                audioBlogAdapter.setSelected(null,position);
+                PlayerService.startActionSelectAudio(this,position);
+                PlayerService.startActionSendInfoBroadcast(this);
+                PlayerService.startActionPlay(this);
+                break;
+        }
 
     }
 
@@ -252,12 +314,12 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 
                 if (intent.hasExtra(PlayerService.COVER_URL_EXTRA)) {
                     String cover = intent.getStringExtra(PlayerService.COVER_URL_EXTRA);
-                    Picasso.with(playerActivity).load(cover).fit().centerCrop().into(playerActivity.ivCover);
+//                    Picasso.with(playerActivity).load(cover).fit().centerCrop().into(playerActivity.ivCover);
                 }
 
                 if (intent.hasExtra(PlayerService.SONG_NUM_EXTRA)) {
                     int num = intent.getIntExtra(PlayerService.SONG_NUM_EXTRA, 0);
-                    playerActivity.song = playerActivity.playlist.getSongs().get(num);
+                    playerActivity.activityModel.setCurrentSelected(num);
                 }
             }
             if (intent.getAction().equals(PlayerService.DELETE_ACTION))

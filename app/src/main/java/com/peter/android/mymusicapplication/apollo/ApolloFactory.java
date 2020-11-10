@@ -1,4 +1,4 @@
-package com.peter.android.mymusicapplication;
+package com.peter.android.mymusicapplication.apollo;
 
 import android.content.Context;
 
