@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -51,15 +52,15 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
 
         AudioBlogModel audioBlogModel = audioBlogModels.get(position);
         if(position==selectedPosition||audioBlogModel.isSelected()||audioBlogModel.equals(selectedaudioBlogModel)){
-            holder.layout.setBackgroundColor(ContextCompat.getColor(context,android.R.color.darker_gray));
+            holder.view.setBackgroundColor(ContextCompat.getColor(context,android.R.color.darker_gray));
         }else{
-            holder.layout.setBackgroundColor(ContextCompat.getColor(context,android.R.color.white));
+            holder.view.setBackgroundColor(ContextCompat.getColor(context,android.R.color.white));
         }
         holder.name.setText(audioBlogModel.getAudioFileName());
-        holder.size.setText(String.format("%s byte", audioBlogModel.getAudioSize()));
+        holder.size.setText(String.format("%s Mb", audioBlogModel.getAudioSize()/1024.0));
         holder.year.setText(audioBlogModel.getReadableFormat());
         holder.keepListening.setChecked(audioBlogModel.isKeepListening());
-        holder.layout.setOnClickListener(new View.OnClickListener() {
+        holder.view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // handle externally
@@ -87,6 +88,13 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
                 onClickListener.onItemClick(view,position);
             }
         });
+        holder.keepListening.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                audioBlogModel.setKeepListening(b);
+                onClickListener.onItemClick(compoundButton,position);
+            }
+        });
 
 //        // glide is a library for image loading and caching
 //        Glide.with(context).load(carModel.getImage()).apply(mRequestOptions).into(holder.image);
@@ -104,12 +112,12 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
         TextView size;
         TextView year;
         CheckBox keepListening;
-        View layout ;
+        View view;
 
         public AudioBlogViewHolder(@NonNull View itemView) {
             super(itemView);
 
-            layout = itemView;
+            this.view = itemView;
             image = itemView.findViewById(R.id.audio_iv);
             name = itemView.findViewById(R.id.tv_name);
             size = itemView.findViewById(R.id.tv_size);
@@ -126,8 +134,9 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
         void onItemClick(View view,int position);
     }
 
-    public void setSelected(AudioBlogModel audioBlogModel,int position){
-        this.selectedaudioBlogModel = audioBlogModel;
+    public void setSelected(int position){
+        this.selectedaudioBlogModel = audioBlogModels.get(position);
+        selectedaudioBlogModel.setSelected(true);
         this.selectedPosition = position;
         notifyDataSetChanged();
     }

@@ -19,6 +19,6 @@ public class Utils {
     }
 
     public static String getReadableFormat(Date publishedAt) {
-        return DateFormat.getDateInstance(DateFormat.DEFAULT, Locale.US).format(publishedAt);
+        return DateFormat.getDateTimeInstance().format(publishedAt);
     }
 }

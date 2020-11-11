@@ -9,10 +9,11 @@
         android:id="@+id/audio_iv"
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:layout_margin="10dp"
+        android:layout_margin="20dp"
         android:src="@mipmap/ic_launcher_round"
         app:civ_border_color="@android:color/holo_blue_dark"
         app:civ_border_width="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -23,6 +24,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="11dp"
         android:text="16-3-2020"
+        android:textColor="#333030"
         app:layout_constraintBottom_toBottomOf="@+id/audio_iv"
         app:layout_constraintStart_toEndOf="@+id/audio_iv"
         app:layout_constraintTop_toBottomOf="@+id/tv_size"
@@ -35,6 +37,9 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="4dp"
         android:text="Audi name"
+        android:textColor="#333030"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/audio_iv"
         app:layout_constraintTop_toTopOf="@+id/audio_iv" />
 
@@ -43,8 +48,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="16dp"
         android:text="12.0Mb"
+        android:textColor="#333030"
+        app:layout_constraintBottom_toTopOf="@+id/tv_date"
+        app:layout_constraintEnd_toStartOf="@+id/keepPlaying_cb"
+        app:layout_constraintHorizontal_bias="0.01"
         app:layout_constraintStart_toEndOf="@+id/audio_iv"
         app:layout_constraintTop_toBottomOf="@+id/tv_name" />
 
@@ -53,8 +62,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:text="Keep Playing"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_date"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:text="Keep Listening"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -42,6 +42,7 @@ import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy;
 import com.peter.android.mymusicapplication.activities.HomeActivity;
 import com.peter.android.mymusicapplication.models.AudioBlogModel;
 import com.peter.android.mymusicapplication.models.AudioPlayerActivityModel;
+import com.peter.android.mymusicapplication.utility.CountUpTimer;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,6 +56,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
 
     private static final String ACTION_SET_PLAYLIST = "mediaplayer.patryk.mediaplayerpatryk.action.SET_PLAYLIST";
     private static final String ACTION_SELECT = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_SELECT";
+    private static final String ACTION_KEEP_PLAYING = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_KEEP_PLAYING";
     private static final String ACTION_PLAY = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_PLAY";
     private static final String ACTION_PAUSE = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_PAUSE";
     private static final String ACTION_NEXT = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_NEXT";
@@ -185,6 +187,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
             pause();
         }
     };
+    private CountUpTimer countUpTimer;
 
     public static void startActionSetPlaylist(Context context, AudioPlayerActivityModel playlist) {
         Intent intent = new Intent(context, PlayerService.class);
@@ -197,6 +200,14 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         Intent intent = new Intent(context, PlayerService.class);
         intent.setAction(ACTION_SELECT);
         intent.putExtra(EXTRA_PARAM1, songPosition);
+        context.startService(intent);
+    }
+
+    public static void startActionKeepPlaying(Context context, int songPosition, boolean checked) {
+        Intent intent = new Intent(context, PlayerService.class);
+        intent.setAction(ACTION_KEEP_PLAYING);
+        intent.putExtra(EXTRA_PARAM1, songPosition);
+        intent.putExtra(EXTRA_PARAM2, checked);
         context.startService(intent);
     }
 
@@ -268,6 +279,12 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
                 int time = intent.getIntExtra(EXTRA_PARAM1, 0);
                 seekTo(time);
 
+            }
+
+            if (intent.getAction().equals(ACTION_KEEP_PLAYING)){
+               int position= intent.getIntExtra(EXTRA_PARAM1,-1);
+                boolean isChecked= intent.getBooleanExtra(EXTRA_PARAM2,false);
+                handleActionCheckedChanged(position,isChecked);
             }
 
             if (intent.getAction().equals(ACTION_PREVIOUS)) {
@@ -368,8 +385,20 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         selectRandomSong(songPosition);
     }
 
+    private void handleActionCheckedChanged(int songPosition,boolean isChecked){
+        if(songPosition != -1){
+            playlist.getListOfBlogsUI().get(songPosition).setKeepListening(isChecked);
+        }
+
+    }
+
     private void nextSong() {
-        if (player.getExoPlayer().getCurrentWindowIndex() < playlist.getListOfBlogsUI().size()-1) {
+        if (player != null&&player.getExoPlayer().getCurrentWindowIndex() < playlist.getListOfBlogsUI().size()-1) {
+            if(countUpTimer != null) {
+                countUpTimer.reset();
+                if(player.isPlaying())
+                    countUpTimer.resume();
+            }
             player.seekTo(player.getExoPlayer().getCurrentWindowIndex() + 1, 0);
             sendBroadcastWithAction(NEXT_ACTION);
         }
@@ -377,6 +406,11 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
 
     private void selectRandomSong(int position) {
         if(player != null){
+            if(countUpTimer != null) {
+                countUpTimer.reset();
+                if(player.isPlaying())
+                    countUpTimer.resume();
+            }
             if (player.getExoPlayer().getCurrentWindowIndex() < position){
                 player.seekTo(position, 0);
             }else if(player.getExoPlayer().getCurrentWindowIndex() > position){
@@ -390,8 +424,12 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     }
 
     private void previousSong(boolean playOnLoaded) {
-
-        if (player.getExoPlayer().getCurrentWindowIndex() > 0) {
+        if (player != null&&player.getExoPlayer().getCurrentWindowIndex() > 0) {
+            if(countUpTimer != null) {
+                countUpTimer.reset();
+                if(player.isPlaying())
+                countUpTimer.resume();
+            }
             player.seekTo(player.getExoPlayer().getCurrentWindowIndex() - 1, 0);
             sendBroadcastWithAction(PREVIOUS_ACTION);
         }
@@ -437,6 +475,27 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         mediaSessionCompat.setActive(true);
 
         player.play();
+        if(countUpTimer == null) {
+            countUpTimer = new CountUpTimer(false);
+
+            countUpTimer.setTickListener(100, new CountUpTimer.TickListener() {
+                @Override
+                public void onTick(int milliseconds) {
+                    if(milliseconds/1000==10){
+                        Log.e("Tag 10 sec","NEXXXT");
+                        if(!playlist.getListOfBlogsUI().get(player.getCurrentWindow()).isKeepListening()){
+                            PlayerService.startActionNextSong(getApplicationContext());
+                        }
+                        countUpTimer.reset();
+                        countUpTimer.pause();
+                    }
+
+                }
+            });
+            countUpTimer.resume();
+        }else{
+            countUpTimer.resume();
+        }
 
         IntentFilter filter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         registerReceiver(noisyReceiver, filter);
@@ -453,7 +512,8 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     }
 
     private void pause() {
-
+        if(countUpTimer != null)
+        countUpTimer.pause();
         Intent updateIntent = new Intent();
         sendBroadcastWithAction(PAUSE_ACTION);
         sendBroadcast(updateIntent);
@@ -750,6 +810,10 @@ Handler exoplayerhandler = new Handler();
     }
 
     private void killPlayer() {
+        if(countUpTimer != null) {
+            countUpTimer.pause();
+            countUpTimer = null;
+        }
         abandonAudioFocus();
         isUpdatingThread = false;
         if (player != null) {

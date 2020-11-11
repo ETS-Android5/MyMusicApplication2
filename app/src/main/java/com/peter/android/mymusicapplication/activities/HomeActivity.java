@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapter.OnItemClicked {
@@ -252,25 +254,31 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 
         String stringTotalTime;
         if (h != 0)
-            stringTotalTime = String.format("%02d:%02d:%02d", h, m, s);
+            stringTotalTime = String.format(Locale.ENGLISH,"%02d:%02d:%02d", h, m, s);
         else
-            stringTotalTime = String.format("%02d:%02d", m, s);
+            stringTotalTime = String.format(Locale.ENGLISH,"%02d:%02d", m, s);
         return stringTotalTime;
     }
 
     @Override
     public void onItemClick(View view, int position) {
         switch (view.getId()){
-            case R.id.layout:
-            case R.id.tvTime:
             case R.id.tv_date:
+            case R.id.tv_size:
             case R.id.tv_name:
                 PlayerService.startActionPause(this);
                 activityModel.setCurrentSelected(position);
-                audioBlogAdapter.setSelected(null,position);
+                audioBlogAdapter.setSelected(position);
                 PlayerService.startActionSelectAudio(this,position);
                 PlayerService.startActionSendInfoBroadcast(this);
                 PlayerService.startActionPlay(this);
+                break;
+
+            case R.id.keepPlaying_cb:
+
+                PlayerService.startActionKeepPlaying(this,position,((CheckBox)view).isChecked());
+
+
                 break;
         }
 
@@ -320,6 +328,9 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
                 if (intent.hasExtra(PlayerService.SONG_NUM_EXTRA)) {
                     int num = intent.getIntExtra(PlayerService.SONG_NUM_EXTRA, 0);
                     playerActivity.activityModel.setCurrentSelected(num);
+                    playerActivity.audioBlogAdapter.setSelected(num);
+                    playerActivity.audioBlogAdapter.notifyDataSetChanged();
+
                 }
             }
             if (intent.getAction().equals(PlayerService.DELETE_ACTION))
