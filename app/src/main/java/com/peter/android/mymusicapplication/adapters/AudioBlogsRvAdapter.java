@@ -2,6 +2,7 @@ package com.peter.android.mymusicapplication.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
@@ -19,6 +20,8 @@ import com.peter.android.mymusicapplication.R;
 import com.peter.android.mymusicapplication.models.AudioBlogModel;
 
 import java.util.List;
+
+import io.gresse.hugo.vumeterlibrary.VuMeterView;
 
 public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapter.AudioBlogViewHolder> {
 
@@ -51,13 +54,18 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
     public void onBindViewHolder(@NonNull AudioBlogViewHolder holder, int position) {
 
         AudioBlogModel audioBlogModel = audioBlogModels.get(position);
+        holder.view.setBackgroundColor(ContextCompat.getColor(context,android.R.color.white));
         if(position==selectedPosition||audioBlogModel.isSelected()||audioBlogModel.equals(selectedaudioBlogModel)){
-            holder.view.setBackgroundColor(ContextCompat.getColor(context,android.R.color.darker_gray));
+            holder.name.setTextColor(ContextCompat.getColor(context,R.color.purple));
+            holder.vuMeterView.setVisibility(View.VISIBLE);
+            holder.vuMeterView.resume(true);
         }else{
-            holder.view.setBackgroundColor(ContextCompat.getColor(context,android.R.color.white));
+            holder.name.setTextColor(ContextCompat.getColor(context,R.color.black));
+            holder.vuMeterView.stop(true);
+            holder.vuMeterView.setVisibility(View.GONE);
         }
         holder.name.setText(audioBlogModel.getAudioFileName());
-        holder.size.setText(String.format("%s Mb", audioBlogModel.getAudioSize()/1024.0));
+        holder.size.setText(String.format("%s Mb", Math.floor(audioBlogModel.getAudioSize()/(1024*1024))));
         holder.year.setText(audioBlogModel.getReadableFormat());
         holder.keepListening.setChecked(audioBlogModel.isKeepListening());
         holder.view.setOnClickListener(new View.OnClickListener() {
@@ -111,6 +119,7 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
         TextView name;
         TextView size;
         TextView year;
+        VuMeterView vuMeterView;
         CheckBox keepListening;
         View view;
 
@@ -123,6 +132,7 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
             size = itemView.findViewById(R.id.tv_size);
             year = itemView.findViewById(R.id.tv_date);
             keepListening = itemView.findViewById(R.id.keepPlaying_cb);
+            vuMeterView = itemView.findViewById(R.id.play_state);
         }
     }
 

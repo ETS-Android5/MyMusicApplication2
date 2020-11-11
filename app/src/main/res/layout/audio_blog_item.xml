@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:vumeter="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:id="@+id/item_view">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/audio_iv"
@@ -23,7 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginTop="11dp"
-        android:text="16-3-2020"
+        android:text="@color/black"
         android:textColor="#333030"
         app:layout_constraintBottom_toBottomOf="@+id/audio_iv"
         app:layout_constraintStart_toEndOf="@+id/audio_iv"
@@ -34,23 +36,23 @@
         android:id="@+id/tv_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
         android:layout_marginTop="4dp"
+        android:layout_marginStart="15dp"
         android:text="Audi name"
-        android:textColor="#333030"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/audio_iv"
+        app:layout_constraintHorizontal_bias="0.093"
+        app:layout_constraintStart_toEndOf="@+id/play_state"
         app:layout_constraintTop_toTopOf="@+id/audio_iv" />
 
     <TextView
         android:id="@+id/tv_size"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginStart="20dp"
         android:layout_marginTop="16dp"
         android:text="12.0Mb"
-        android:textColor="#333030"
+        android:textColor="@color/black"
         app:layout_constraintBottom_toTopOf="@+id/tv_date"
         app:layout_constraintEnd_toStartOf="@+id/keepPlaying_cb"
         app:layout_constraintHorizontal_bias="0.01"
@@ -63,8 +65,24 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:text="Keep Listening"
+        android:buttonTint="@android:color/holo_blue_dark"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <io.gresse.hugo.vumeterlibrary.VuMeterView
+        android:id="@+id/play_state"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="20dp"
+        vumeter:vumeter_stopSize="5dp"
+        vumeter:vumeter_speed="5"
+        vumeter:vumeter_blockNumber="4"
+        vumeter:vumeter_blockSpacing="1dp"
+        vumeter:vumeter_backgroundColor="@color/purple"
+        vumeter:vumeter_startOff="false"
+        app:layout_constraintStart_toEndOf="@+id/audio_iv"
+        app:layout_constraintTop_toTopOf="@+id/audio_iv"
+        android:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

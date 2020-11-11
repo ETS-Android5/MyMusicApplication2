@@ -108,8 +108,14 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 
             @Override
             public void onFailure(@NotNull ApolloException e) {
+                HomeActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(HomeActivity.this,"Connection Error",Toast.LENGTH_SHORT).show();
+                    }
+                });
                 Log.e("Apolo Error",e.toString());// should we retry ?
-                Toast.makeText(HomeActivity.this,"Connection Error",Toast.LENGTH_SHORT).show();
+
             }
         });
         initilizeViews();
@@ -146,29 +152,31 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 //        tvDuration.setText(stringTotalTime);
 
         sbProgress = (SeekBar) findViewById(R.id.seekBar);
-        sbProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            int time;
+        sbProgress.setClickable(false);
 
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                time = progress;
-
-                sbProgress.setProgress(this.time);
-                if (fromUser)
-                    tvTime.setText(getTimeString(time));
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                blockGUIUpdate = true;
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                unblockGUIUpdate();
-                setTime(time);
-            }
-        });
+//        sbProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+//            int time;
+//
+//            @Override
+//            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+//                time = progress;
+//
+//                sbProgress.setProgress(this.time);
+//                if (fromUser)
+//                    tvTime.setText(getTimeString(time));
+//            }
+//
+//            @Override
+//            public void onStartTrackingTouch(SeekBar seekBar) {
+//                blockGUIUpdate = true;
+//            }
+//
+//            @Override
+//            public void onStopTrackingTouch(SeekBar seekBar) {
+//                unblockGUIUpdate();
+//                setTime(time);
+//            }
+//        });
     }
 
 
@@ -263,6 +271,7 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
     @Override
     public void onItemClick(View view, int position) {
         switch (view.getId()){
+            case R.id.item_view:
             case R.id.tv_date:
             case R.id.tv_size:
             case R.id.tv_name:

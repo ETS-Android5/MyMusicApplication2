@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.HomeActivity">
+    tools:context=".activities.HomeActivity"
+    android:background="@android:color/white">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_audioBlog"
@@ -43,57 +44,100 @@
                 app:layout_constraintRight_toRightOf="parent"
                 tools:layout_constraintBottom_creator="1" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="72dp"
                 android:onClick="play"
-                android:text="Play"
-                app:layout_constraintBottom_toTopOf="@+id/button2"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintLeft_toLeftOf="@+id/button2"
-                app:layout_constraintRight_toRightOf="@+id/button2"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_play_arrow"
+                app:layout_constraintEnd_toStartOf="@+id/button3"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/button2"
+                app:layout_constraintTop_toBottomOf="@+id/seekBar"
                 tools:layout_constraintBottom_creator="1"
                 tools:layout_constraintLeft_creator="1"
-                tools:layout_constraintRight_creator="1" />
+                tools:layout_constraintRight_creator="1"
+                app:rippleColor="@android:color/white"
+                app:cornerRadius="5dp"
+                />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginTop="72dp"
                 android:onClick="pause"
-                android:text="Pause"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
+                app:icon="@drawable/ic_pause"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:layout_constraintEnd_toStartOf="@+id/button"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/button4"
+                app:layout_constraintTop_toBottomOf="@+id/seekBar"
                 tools:layout_constraintBottom_creator="1"
                 tools:layout_constraintLeft_creator="1"
-                tools:layout_constraintRight_creator="1" />
+                tools:layout_constraintRight_creator="1"
+                app:rippleColor="@android:color/white"
+                app:cornerRadius="5dp"
+                />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="26dp"
+                android:layout_marginTop="72dp"
                 android:onClick="next"
-                android:text="Next"
-                app:layout_constraintBottom_toBottomOf="@+id/button2"
-                app:layout_constraintLeft_toRightOf="@+id/button2"
+                app:icon="@drawable/ic_skip_next"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/button"
+                app:layout_constraintTop_toBottomOf="@+id/seekBar"
                 tools:layout_constraintBottom_creator="1"
-                tools:layout_constraintLeft_creator="1" />
+                tools:layout_constraintLeft_creator="1"
+                app:rippleColor="@android:color/white"
+                app:cornerRadius="5dp"
+                />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="26dp"
+                android:layout_marginTop="72dp"
                 android:onClick="previous"
-                android:text="Previous"
-                app:layout_constraintBottom_toBottomOf="@+id/button2"
-                app:layout_constraintRight_toLeftOf="@+id/button2"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_skip_previous"
+                app:layout_constraintEnd_toStartOf="@+id/button2"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/seekBar"
                 tools:layout_constraintBottom_creator="1"
-                tools:layout_constraintRight_creator="1" />
+                tools:layout_constraintRight_creator="1"
+                app:rippleColor="@android:color/white"
+                app:cornerRadius="5dp"
+                app:strokeColor="@android:color/background_light"
+                />
 
             <SeekBar
                 android:id="@+id/seekBar"
@@ -104,6 +148,9 @@
                 android:layout_marginEnd="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginBottom="14dp"
+                android:clickable="false"
+                android:progressTint="@android:color/holo_blue_dark"
+                android:thumbTint="@android:color/holo_blue_dark"
                 app:layout_constraintBottom_toTopOf="@+id/tvDuration"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintLeft_toLeftOf="parent"

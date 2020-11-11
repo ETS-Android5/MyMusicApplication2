@@ -181,6 +181,9 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         }
     };
 
+    public boolean isPlayerPlaying(Context context){
+        return player != null&&player.isPlaying();
+    }
     private BroadcastReceiver noisyReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -288,6 +291,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
             }
 
             if (intent.getAction().equals(ACTION_PREVIOUS)) {
+                if(player != null)
                 previousSong(player.isPlaying());
 
             } else {
@@ -371,6 +375,8 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
 //        updateMediaSessionMetaData();
 //        loadCover();
 //    }
+
+
 
     private void handleActionSetPlaylist(AudioPlayerActivityModel playlist) {
         this.playlist = playlist;
@@ -475,27 +481,8 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         mediaSessionCompat.setActive(true);
 
         player.play();
-        if(countUpTimer == null) {
-            countUpTimer = new CountUpTimer(false);
 
-            countUpTimer.setTickListener(100, new CountUpTimer.TickListener() {
-                @Override
-                public void onTick(int milliseconds) {
-                    if(milliseconds/1000==10){
-                        Log.e("Tag 10 sec","NEXXXT");
-                        if(!playlist.getListOfBlogsUI().get(player.getCurrentWindow()).isKeepListening()){
-                            PlayerService.startActionNextSong(getApplicationContext());
-                        }
-                        countUpTimer.reset();
-                        countUpTimer.pause();
-                    }
 
-                }
-            });
-            countUpTimer.resume();
-        }else{
-            countUpTimer.resume();
-        }
 
         IntentFilter filter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         registerReceiver(noisyReceiver, filter);
@@ -503,6 +490,33 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
 
 
         startUiUpdateThread();
+        if(countUpTimer == null) {
+            countUpTimer = new CountUpTimer(false);
+
+            countUpTimer.setTickListener(100, new CountUpTimer.TickListener() {
+                @Override
+                public void onTick(int milliseconds) {
+                    // so after the 10 sec i will skip NOT BEFORE
+                    if(milliseconds/1000==11){
+                        Log.e("Tag 10 sec","NEXXXT");
+                        if(player != null) {
+                            if (!playlist.getListOfBlogsUI().get(player.getCurrentWindow()).isKeepListening()) {
+                                if (player.getExoPlayer().getCurrentWindowIndex() < playlist.getListOfBlogsUI().size() - 1) {
+                                    PlayerService.startActionNextSong(getApplicationContext());
+                                } else {
+                                    PlayerService.startActionPause(getApplicationContext());
+                                    selectRandomSong(0);
+                                }
+                            }
+                        }
+                        countUpTimer.reset();
+                        countUpTimer.pause();
+                    }
+
+                }
+            });
+        }
+        countUpTimer.resume();
 
         Intent updateIntent = new Intent();
         updateIntent.setAction(PLAY_ACTION);
@@ -553,14 +567,6 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
                     coverPlaceholderId);
 
         //notification
-        String channel;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            channel = createChannel();
-        else {
-            channel = "";
-        }
-
-
         NotificationCompat.Builder builder = MediaStyleHelper.from(this, mediaSessionCompat);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             builder.setCategory(Notification.CATEGORY_SERVICE);
@@ -667,7 +673,7 @@ Handler exoplayerhandler = new Handler();
                     guiUpdateIntent.setAction(GUI_UPDATE_ACTION);
 
                     try {
-                        Thread.sleep(50);
+                        Thread.sleep(50);//200
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -677,7 +683,7 @@ Handler exoplayerhandler = new Handler();
                             sendBroadcast(guiUpdateIntent);});
 
                         try {
-                            Thread.sleep(200);
+                            Thread.sleep(50);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
