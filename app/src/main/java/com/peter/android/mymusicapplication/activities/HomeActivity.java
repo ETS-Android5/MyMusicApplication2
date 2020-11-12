@@ -44,12 +44,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+import am.appwise.components.ni.ConnectionCallback;
+import am.appwise.components.ni.NoInternetDialog;
+
 public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapter.OnItemClicked {
 
-    private ImageView ivCover;
+
     private SeekBar sbProgress;
     private TextView tvTime;
     private TextView tvDuration;
+    private TextView songText;
 
 
 
@@ -59,14 +63,44 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
     private RecyclerView audioBlogRv;
     private volatile AudioPlayerActivityModel activityModel = new AudioPlayerActivityModel();
     private AudioBlogsRvAdapter audioBlogAdapter;
+    private NoInternetDialog noInternetDialog;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+         noInternetDialog = new NoInternetDialog.Builder(this).build();
+         noInternetDialog.setCancelable(false);
+         noInternetDialog.setConnectionCallback(new ConnectionCallback() {
+             @Override
+             public void hasActiveConnection(boolean hasActiveConnection) {
+                 // it doesn't work??
+                 if(hasActiveConnection){
+                     if(activityModel.getListOfBlogsUI().isEmpty()){
+                         getDataToSerivce();
+                     }else{
+                         Toast.makeText(getApplicationContext(),"Welcome Back :)",Toast.LENGTH_SHORT).show();
+                     }
+                 }else{
+                     if (activityModel.getListOfBlogsUI().isEmpty()) {
+                         Intent myService = new Intent(HomeActivity.this, PlayerService.class);
+                         stopService(myService);
+                     } else {
+                         if(isMyServiceRunning(PlayerService.class)){
+                             PlayerService.startActionPause(HomeActivity.this);
+                         }
+                     }
+                 }
+             }
+         });
         audioBlogRv = findViewById(R.id.rv_audioBlog);
         setUpRv();
+        getDataToSerivce();
+        initilizeViews();
+    }
+
+    private void getDataToSerivce() {
         ApolloFactory.getApolloClient().query(LoadSomePostsQuery.builder().build()).enqueue(new ApolloCall.Callback<LoadSomePostsQuery.Data>() {
             @Override
             public void onResponse(@NotNull Response<LoadSomePostsQuery.Data> response) {
@@ -118,7 +152,6 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 
             }
         });
-        initilizeViews();
     }
 
     private void setUpRv() {
@@ -132,7 +165,8 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 
 
     private void initilizeViews() {
-        ivCover = (ImageView) findViewById(R.id.ivCover);
+
+        songText = findViewById(R.id.tv_audio_name);
 
         tvTime = (TextView) findViewById(R.id.tvTime);
         String stringActualTime = String.format("%02d:%02d", 0, 0);
@@ -339,6 +373,7 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
                     playerActivity.activityModel.setCurrentSelected(num);
                     playerActivity.audioBlogAdapter.setSelected(num);
                     playerActivity.audioBlogAdapter.notifyDataSetChanged();
+                    playerActivity.songText.setText(playerActivity.activityModel.getListOfBlogsUI().get(num).getTitle());
 
                 }
             }
@@ -357,4 +392,9 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
         stopService(myService);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        noInternetDialog.onDestroy();
+    }
 }
