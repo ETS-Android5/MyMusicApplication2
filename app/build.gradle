@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         applicationId "com.peter.android.mymusicapplication"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -71,5 +71,5 @@ dependencies {
 
     implementation 'io.gresse.hugo.vumeterlibrary:vumeterlibrary:1.0.17'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'am.appwise.components:NoInternetDialog:1.1.3'
+    implementation 'com.github.ImaginativeShohag:Oops-No-Internet:v1.1.5'
 }

@@ -37,6 +37,8 @@ import com.peter.android.mymusicapplication.models.AudioBlogModel;
 import com.peter.android.mymusicapplication.models.AudioPlayerActivityModel;
 import com.squareup.picasso.Picasso;
 
+import org.imaginativeworld.oopsnointernet.ConnectionCallback;
+import org.imaginativeworld.oopsnointernet.NoInternetDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -44,8 +46,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-import am.appwise.components.ni.ConnectionCallback;
-import am.appwise.components.ni.NoInternetDialog;
+
 
 public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapter.OnItemClicked {
 
@@ -63,20 +64,22 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
     private RecyclerView audioBlogRv;
     private volatile AudioPlayerActivityModel activityModel = new AudioPlayerActivityModel();
     private AudioBlogsRvAdapter audioBlogAdapter;
-    private NoInternetDialog noInternetDialog;
+// No Internet Dialog
+private NoInternetDialog noInternetDialog;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-         noInternetDialog = new NoInternetDialog.Builder(this).build();
-         noInternetDialog.setCancelable(false);
-         noInternetDialog.setConnectionCallback(new ConnectionCallback() {
-             @Override
-             public void hasActiveConnection(boolean hasActiveConnection) {
-                 // it doesn't work??
-                 if(hasActiveConnection){
+
+        // No Internet Dialog
+        NoInternetDialog.Builder builder1 = new NoInternetDialog.Builder(this);
+
+        builder1.setConnectionCallback(new ConnectionCallback() { // Optional
+            @Override
+            public void hasActiveConnection(boolean hasActiveConnection) {
+                if(hasActiveConnection){
                      if(activityModel.getListOfBlogsUI().isEmpty()){
                          getDataToSerivce();
                      }else{
@@ -92,8 +95,23 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
                          }
                      }
                  }
-             }
-         });
+            }
+        });
+        builder1.setCancelable(false); // Optional
+        builder1.setNoInternetConnectionTitle("No Internet"); // Optional
+        builder1.setNoInternetConnectionMessage("Check your Internet connection and try again"); // Optional
+        builder1.setShowInternetOnButtons(true); // Optional
+        builder1.setPleaseTurnOnText("Please turn on"); // Optional
+        builder1.setWifiOnButtonText("Wifi"); // Optional
+        builder1.setMobileDataOnButtonText("Mobile data"); // Optional
+
+        builder1.setOnAirplaneModeTitle("No Internet"); // Optional
+        builder1.setOnAirplaneModeMessage("You have turned on the airplane mode."); // Optional
+        builder1.setPleaseTurnOffText("Please turn off"); // Optional
+        builder1.setAirplaneModeOffButtonText("Airplane mode"); // Optional
+        builder1.setShowAirplaneModeOffButtons(true); // Optional
+
+        noInternetDialog = builder1.build();
         audioBlogRv = findViewById(R.id.rv_audioBlog);
         setUpRv();
         getDataToSerivce();
@@ -113,10 +131,8 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
                     audioBlogAdapter.notifyDataSetChanged();
 
                     if (!isMyServiceRunning(PlayerService.class)) {
-//            PlayerService.startActionSetPlaylist(this, playlist.getName(), 0);
                         PlayerService.startActionSetPlaylist(HomeActivity.this, activityModel);
                         PlayerService.startActionSelectAudio(HomeActivity.this, 0);
-//            PlayerService.startActionPlay(this);
                     }
 
                     if (receiver == null) {
@@ -395,6 +411,7 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        noInternetDialog.onDestroy();
+//        noInternetDialog.onDestroy();
+        noInternetDialog.destroy();
     }
 }
