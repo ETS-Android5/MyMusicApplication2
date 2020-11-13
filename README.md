@@ -40,12 +40,12 @@ My Music Application runs on the following platforms:
 * Android API level 21+
 * JDK 8+
 
-### Screenhot:
+### screenshots:
 
-![](screenhots/pic1.png)
-![](screenhots/pic2.png)
-![](screenhots/pic3.png)
-![](screenhots/pic4.png)
-![](screenhots/pic5.png)
-![](screenhots/pic6.png)
-![](screenhots/pic7.png)
+![](screenshots/pic1.png)
+![](screenshots/pic2.png)
+![](screenshots/pic3.png)
+![](screenshots/pic4.png)
+![](screenshots/pic5.png)
+![](screenshots/pic6.png)
+![](screenshots/pic7.png)
