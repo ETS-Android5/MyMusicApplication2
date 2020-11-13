@@ -42,10 +42,10 @@ My Music Application runs on the following platforms:
 
 ### screenshots:
 
-![](screenshots/pic1.png)
-![](screenshots/pic2.png)
-![](screenshots/pic3.png)
-![](screenshots/pic4.png)
-![](screenshots/pic5.png)
-![](screenshots/pic6.png)
-![](screenshots/pic7.png)
+![](screenshots/pic1.jpg)
+![](screenshots/pic2.jpg)
+![](screenshots/pic3.jpg)
+![](screenshots/pic4.jpg)
+![](screenshots/pic5.jpg)
+![](screenshots/pic6.jpg)
+![](screenshots/pic7.jpg)
