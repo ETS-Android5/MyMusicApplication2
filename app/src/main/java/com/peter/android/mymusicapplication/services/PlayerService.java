@@ -89,6 +89,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     private static final String EXTRA_PARAM1 = "mediaplayer.peter.mediaplayerpeter.PARAM1";
     private static final String EXTRA_PARAM2 = "mediaplayer.peter.mediaplayerpeter.PARAM2";
     private static final String EXTRA_PARAM3 = "mediaplayer.peter.mediaplayerpeter.PARAM3";
+    private static final int TIME_LIMIT = 11; // we won't listen after TIME_LIMIT-1
     private final int SKIP_TIME = 10000;
     protected int coverPlaceholderId = R.mipmap.ic_launcher;
     protected int smallNotificationIconId = R.mipmap.ic_launcher;
@@ -557,7 +558,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
                 @Override
                 public void onTick(int milliseconds) {
                     // so after the 10 sec i will skip NOT BEFORE
-                    if (milliseconds / 1000 == 11) {
+                    if (milliseconds / 1000 == PlayerService.TIME_LIMIT) {
                         Log.e("Tag 10 sec", "NEXXXT");
                         if (player != null) {
                             if (!playlist.getListOfBlogsUI().get(player.getCurrentWindow()).isKeepListening()) {
