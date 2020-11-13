@@ -57,6 +57,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
 
     private static final String ACTION_SET_PLAYLIST = "mediaplayer.patryk.mediaplayerpatryk.action.SET_PLAYLIST";
     private static final String ACTION_SELECT = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_SELECT";
+    private static final String ACTION_CLOSE_NOTIFICATION = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_CLOSE_NOTIFICATION";
     private static final String ACTION_KEEP_PLAYING = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_KEEP_PLAYING";
     private static final String ACTION_PLAY = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_PLAY";
     private static final String ACTION_PAUSE = "mediaplayer.patryk.mediaplayerpatryk.action.ACTION_PAUSE";
@@ -182,6 +183,13 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         }
     };
 
+    public static void startCancelNotification(Context context) {
+        Intent intent = new Intent(context, PlayerService.class);
+        intent.setAction(ACTION_CLOSE_NOTIFICATION);
+        context.startService(intent);
+
+    }
+
     public boolean isPlayerPlaying(Context context){
         return player != null&&player.isPlaying();
     }
@@ -289,6 +297,10 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
                int position= intent.getIntExtra(EXTRA_PARAM1,-1);
                 boolean isChecked= intent.getBooleanExtra(EXTRA_PARAM2,false);
                 handleActionCheckedChanged(position,isChecked);
+            }
+
+            if(intent.getAction().equals(ACTION_CLOSE_NOTIFICATION)){
+                cancelNotification();// if internet is down better to close notifiaction
             }
 
             if (intent.getAction().equals(ACTION_PREVIOUS)) {
@@ -443,14 +455,19 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     }
 
     private void loadCover() {
-        cover = Utils.getFromVector(getApplicationContext(),R.drawable.ic_music);
-        if(cover == null) {
-            final ImageView iv = new ImageView(this);
-            iv.setImageDrawable(ContextCompat.getDrawable(this.getApplicationContext(), R.drawable.exo_icon_circular_play));
-            cover = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+        try {
+            cover = Utils.getFromVector(getApplicationContext(), R.drawable.ic_music);
+            if (cover == null) {
+                final ImageView iv = new ImageView(this);
+                iv.setImageDrawable(ContextCompat.getDrawable(this.getApplicationContext(), R.drawable.exo_icon_circular_play));
+                cover = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+            }
+        }catch (Exception e){
+
         }
         updateMediaSessionMetaData();
         makeNotification();
+        // TODO ASK FOR AUDIO IMAGE
 //        if (currentAudioBlog.getImageUrl() != null && !currentAudioBlog.getImageUrl().isEmpty())
 //            Picasso.with(this).load(currentAudioBlog.getImageUrl()).placeholder(coverPlaceholderId).into(iv, new Callback() {
 //                @Override
@@ -566,7 +583,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     private void makeNotification() {
         if (playlist == null ||playlist.getListOfBlogsUI().isEmpty()|| player == null)
             return;
-        if (cover == null)// not null
+        if (cover == null)// if null
             cover = BitmapFactory.decodeResource(getResources(),
                     coverPlaceholderId);
 
@@ -605,6 +622,10 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         builder.setDeleteIntent(pdeleteIntent);
 
         builder.setColor(ContextCompat.getColor(this, R.color.purple));
+
+        Bundle extras = new Bundle();
+        extras.putInt(MediaMetadataCompat.METADATA_KEY_DURATION, -1);
+        builder.setExtras(extras);
 
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (player.isPlaying()) {
@@ -701,14 +722,14 @@ Handler exoplayerhandler = new Handler();
 
     private void updateMediaSessionMetaData() {
 
-        long duration = (player != null ? player.getDuration() : 180);
+//        long duration = (player != null ? player.getDuration() : 180);
 
         MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
         builder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentAudioBlog.getAudioFileName());
         builder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "Unknown");
         builder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentAudioBlog.getTitle());
         builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentAudioBlog.getUrl());
-        builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration);
+        builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, -1);
 
         try {
             Bitmap icon;

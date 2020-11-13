@@ -1,5 +1,6 @@
 package com.peter.android.mymusicapplication.activities;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -71,6 +72,9 @@ private NoInternetDialog noInternetDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(savedInstanceState != null && savedInstanceState.containsKey("activityModel")){
+            activityModel = savedInstanceState.getParcelable("activityModel");
+        }
         setContentView(R.layout.activity_home);
 
         // No Internet Dialog
@@ -92,6 +96,7 @@ private NoInternetDialog noInternetDialog;
                      } else {
                          if(isMyServiceRunning(PlayerService.class)){
                              PlayerService.startActionPause(HomeActivity.this);
+                             PlayerService.startCancelNotification(HomeActivity.this);
                          }
                      }
                  }
@@ -114,7 +119,7 @@ private NoInternetDialog noInternetDialog;
         noInternetDialog = builder1.build();
         audioBlogRv = findViewById(R.id.rv_audioBlog);
         setUpRv();
-        getDataToSerivce();
+//        getDataToSerivce();
         initilizeViews();
     }
 
@@ -413,5 +418,19 @@ private NoInternetDialog noInternetDialog;
         super.onDestroy();
 //        noInternetDialog.onDestroy();
         noInternetDialog.destroy();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable("activityModel",activityModel);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if(savedInstanceState.containsKey("activityModel")){
+            activityModel = savedInstanceState.getParcelable("activityModel");
+        }
     }
 }
