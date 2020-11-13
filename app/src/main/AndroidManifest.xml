@@ -15,7 +15,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme_PRIVATE"
         tools:replace="android:theme">
-        <activity android:name=".activities.HomeActivity" android:launchMode="singleTask">
+        <activity android:name=".activities.HomeActivity" android:launchMode="singleTask"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
