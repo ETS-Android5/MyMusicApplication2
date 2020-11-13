@@ -2,12 +2,18 @@ package com.peter.android.mymusicapplication.utility;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.core.content.ContextCompat;
+
+import com.peter.android.mymusicapplication.R;
 import com.peter.android.mymusicapplication.broadcast.InternetBroadCastReceiver;
 
 import java.text.DateFormat;
@@ -62,5 +68,21 @@ public class Utils {
             }
         }
         return false;
+    }
+
+    public static Bitmap getFromVector(Context context,int id) {
+
+        try {
+            Drawable drawable = ContextCompat.getDrawable(context,id);
+            Bitmap bitmap;
+            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            drawable.draw(canvas);
+            return bitmap;
+        } catch (OutOfMemoryError e) {
+            // Handle the error
+            return null;
+        }
     }
 }

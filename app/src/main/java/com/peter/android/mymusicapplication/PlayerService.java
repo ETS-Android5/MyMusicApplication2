@@ -43,6 +43,7 @@ import com.peter.android.mymusicapplication.activities.HomeActivity;
 import com.peter.android.mymusicapplication.models.AudioBlogModel;
 import com.peter.android.mymusicapplication.models.AudioPlayerActivityModel;
 import com.peter.android.mymusicapplication.utility.CountUpTimer;
+import com.peter.android.mymusicapplication.utility.Utils;
 
 import java.io.IOException;
 import java.util.List;
@@ -442,9 +443,12 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     }
 
     private void loadCover() {
-        final ImageView iv = new ImageView(this);
-        iv.setImageDrawable(ContextCompat.getDrawable(this.getApplicationContext(),R.drawable.exo_icon_circular_play));
-        cover = ((BitmapDrawable)iv.getDrawable()).getBitmap();
+        cover = Utils.getFromVector(getApplicationContext(),R.drawable.ic_music);
+        if(cover == null) {
+            final ImageView iv = new ImageView(this);
+            iv.setImageDrawable(ContextCompat.getDrawable(this.getApplicationContext(), R.drawable.exo_icon_circular_play));
+            cover = ((BitmapDrawable) iv.getDrawable()).getBitmap();
+        }
         updateMediaSessionMetaData();
         makeNotification();
 //        if (currentAudioBlog.getImageUrl() != null && !currentAudioBlog.getImageUrl().isEmpty())
@@ -560,9 +564,9 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     }
 
     private void makeNotification() {
-        if (playlist == null || player == null)
+        if (playlist == null ||playlist.getListOfBlogsUI().isEmpty()|| player == null)
             return;
-        if (cover == null)
+        if (cover == null)// not null
             cover = BitmapFactory.decodeResource(getResources(),
                     coverPlaceholderId);
 
@@ -588,7 +592,6 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         else
             builder.addAction(R.drawable.play_notification, "Play", pplayIntent);
         builder.addAction(R.drawable.next_pressed, "Rewind", MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
-
         Intent deleteIntent = new Intent(this, PlayerService.class);
         deleteIntent.setAction(DELETE_ACTION);
         PendingIntent pdeleteIntent = PendingIntent.getService(this, 0,
@@ -601,7 +604,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         );
         builder.setDeleteIntent(pdeleteIntent);
 
-        builder.setColor(ContextCompat.getColor(this, R.color.colorPrimary));
+        builder.setColor(ContextCompat.getColor(this, R.color.purple));
 
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (player.isPlaying()) {
