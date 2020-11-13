@@ -1,13 +1,7 @@
 package com.peter.android.mymusicapplication.activities;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.app.ActivityManager;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,36 +11,35 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.apollographql.apollo.ApolloCall;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import com.peter.android.mymusicapplication.LoadSomePostsQuery;
-
-import com.peter.android.mymusicapplication.PlayerService;
-import com.peter.android.mymusicapplication.Playlist;
-import com.peter.android.mymusicapplication.PlaylistHandler;
 import com.peter.android.mymusicapplication.R;
-import com.peter.android.mymusicapplication.Song;
 import com.peter.android.mymusicapplication.adapters.AudioBlogsRvAdapter;
 import com.peter.android.mymusicapplication.apollo.ApolloFactory;
 import com.peter.android.mymusicapplication.models.AudioBlogModel;
 import com.peter.android.mymusicapplication.models.AudioPlayerActivityModel;
-import com.squareup.picasso.Picasso;
+import com.peter.android.mymusicapplication.services.PlayerService;
 
 import org.imaginativeworld.oopsnointernet.ConnectionCallback;
 import org.imaginativeworld.oopsnointernet.NoInternetDialog;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-
 
 
 public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapter.OnItemClicked {
@@ -58,48 +51,60 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
     private TextView songText;
 
 
-
     private GuiReceiver receiver;
     private Handler handler = new Handler();
     private boolean blockGUIUpdate;
     private RecyclerView audioBlogRv;
     private volatile AudioPlayerActivityModel activityModel = new AudioPlayerActivityModel();
     private AudioBlogsRvAdapter audioBlogAdapter;
-// No Internet Dialog
-private NoInternetDialog noInternetDialog;
+    // No Internet Dialog
+    private NoInternetDialog noInternetDialog;
+    private ProgressDialog progressDialog;
 
+    private static String getTimeString(int totalTime) {
+        long s = totalTime % 60;
+        long m = (totalTime / 60) % 60;
+        long h = totalTime / 3600;
+
+        String stringTotalTime;
+        if (h != 0)
+            stringTotalTime = String.format(Locale.ENGLISH, "%02d:%02d:%02d", h, m, s);
+        else
+            stringTotalTime = String.format(Locale.ENGLISH, "%02d:%02d", m, s);
+        return stringTotalTime;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(savedInstanceState != null && savedInstanceState.containsKey("activityModel")){
+        if (savedInstanceState != null && savedInstanceState.containsKey("activityModel")) {
             activityModel = savedInstanceState.getParcelable("activityModel");
         }
         setContentView(R.layout.activity_home);
-
+        createProgressDialog();// loading dialog
         // No Internet Dialog
         NoInternetDialog.Builder builder1 = new NoInternetDialog.Builder(this);
 
         builder1.setConnectionCallback(new ConnectionCallback() { // Optional
             @Override
             public void hasActiveConnection(boolean hasActiveConnection) {
-                if(hasActiveConnection){
-                     if(activityModel.getListOfBlogsUI().isEmpty()){
-                         getDataToSerivce();
-                     }else{
-                         Toast.makeText(getApplicationContext(),"Welcome Back :)",Toast.LENGTH_SHORT).show();
-                     }
-                 }else{
-                     if (activityModel.getListOfBlogsUI().isEmpty()) {
-                         Intent myService = new Intent(HomeActivity.this, PlayerService.class);
-                         stopService(myService);
-                     } else {
-                         if(isMyServiceRunning(PlayerService.class)){
-                             PlayerService.startActionPause(HomeActivity.this);
-                             PlayerService.startCancelNotification(HomeActivity.this);
-                         }
-                     }
-                 }
+                if (hasActiveConnection) {
+                    if (activityModel.getListOfBlogsUI().isEmpty()) {
+                        getDataToService();
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Welcome Back :)", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    if (activityModel.getListOfBlogsUI().isEmpty()) {
+                        Intent myService = new Intent(HomeActivity.this, PlayerService.class);
+                        stopService(myService);
+                    } else {
+                        if (isMyServiceRunning(PlayerService.class)) {
+                            PlayerService.startActionPause(HomeActivity.this);
+                            PlayerService.startCancelNotification(HomeActivity.this);
+                        }
+                    }
+                }
             }
         });
         builder1.setCancelable(false); // Optional
@@ -123,13 +128,29 @@ private NoInternetDialog noInternetDialog;
         initilizeViews();
     }
 
-    private void getDataToSerivce() {
+    private void createProgressDialog() {
+        progressDialog = new ProgressDialog(HomeActivity.this, R.style.AppCompatAlertDialogStyle);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialog.setMessage(getString(R.string.loading));
+        progressDialog.setIndeterminate(true);
+        progressDialog.setCancelable(true);
+    }
+
+    private void getDataToService() {
+        HomeActivity.this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (progressDialog != null && !progressDialog.isShowing())
+                    progressDialog.show();
+            }
+        });
+
         ApolloFactory.getApolloClient().query(LoadSomePostsQuery.builder().build()).enqueue(new ApolloCall.Callback<LoadSomePostsQuery.Data>() {
             @Override
             public void onResponse(@NotNull Response<LoadSomePostsQuery.Data> response) {
                 List<LoadSomePostsQuery.Post> audioPosts = Objects.requireNonNull(response.getData()).posts();
                 handler.post(() -> {
-                    for(LoadSomePostsQuery.Post audioPost:audioPosts){
+                    for (LoadSomePostsQuery.Post audioPost : audioPosts) {
                         activityModel.addToListOfBlogsUI(new AudioBlogModel(audioPost));
                         activityModel.setCurrentSelected(0);
                     }
@@ -158,6 +179,13 @@ private NoInternetDialog noInternetDialog;
                     filter.addAction(PlayerService.COMPLETE_ACTION);
                     registerReceiver(receiver, filter);
                     PlayerService.startActionSendInfoBroadcast(HomeActivity.this);
+                    HomeActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (progressDialog != null && progressDialog.isShowing())
+                                progressDialog.dismiss();
+                        }
+                    });
                 });
             }
 
@@ -166,24 +194,25 @@ private NoInternetDialog noInternetDialog;
                 HomeActivity.this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(HomeActivity.this,"Connection Error",Toast.LENGTH_SHORT).show();
+                        if (progressDialog != null && progressDialog.isShowing())
+                            progressDialog.dismiss();
+                        Toast.makeText(HomeActivity.this, "Connection Error Check th API or Internet Connection", Toast.LENGTH_LONG).show();
                     }
                 });
-                Log.e("Apolo Error",e.toString());// should we retry ?
+                Log.e("Apolo Error", e.toString());// should we retry ?
 
             }
         });
     }
 
     private void setUpRv() {
-        audioBlogAdapter = new AudioBlogsRvAdapter(activityModel.getListOfBlogsUI(),activityModel.currentSelected, this,this);
+        audioBlogAdapter = new AudioBlogsRvAdapter(activityModel.getListOfBlogsUI(), activityModel.currentSelected, this, this);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         audioBlogRv.setLayoutManager(layoutManager);
         audioBlogRv.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
         audioBlogRv.setItemAnimator(new DefaultItemAnimator());
         audioBlogRv.setAdapter(audioBlogAdapter);
     }
-
 
     private void initilizeViews() {
 
@@ -234,13 +263,12 @@ private NoInternetDialog noInternetDialog;
 //        });
     }
 
-
     @Override
     protected void onResume() {
         super.onResume();
 
 
-        if(activityModel.currentSelected != -1) {
+        if (activityModel.currentSelected != -1) {
             if (receiver == null) {
                 receiver = new GuiReceiver();
                 receiver.setPlayerActivity(this);
@@ -310,22 +338,9 @@ private NoInternetDialog noInternetDialog;
         return false;
     }
 
-    private static String getTimeString(int totalTime) {
-        long s = totalTime % 60;
-        long m = (totalTime / 60) % 60;
-        long h = totalTime / 3600;
-
-        String stringTotalTime;
-        if (h != 0)
-            stringTotalTime = String.format(Locale.ENGLISH,"%02d:%02d:%02d", h, m, s);
-        else
-            stringTotalTime = String.format(Locale.ENGLISH,"%02d:%02d", m, s);
-        return stringTotalTime;
-    }
-
     @Override
     public void onItemClick(View view, int position) {
-        switch (view.getId()){
+        switch (view.getId()) {
             case R.id.item_view:
             case R.id.tv_date:
             case R.id.tv_size:
@@ -333,19 +348,47 @@ private NoInternetDialog noInternetDialog;
                 PlayerService.startActionPause(this);
                 activityModel.setCurrentSelected(position);
                 audioBlogAdapter.setSelected(position);
-                PlayerService.startActionSelectAudio(this,position);
+                PlayerService.startActionSelectAudio(this, position);
                 PlayerService.startActionSendInfoBroadcast(this);
                 PlayerService.startActionPlay(this);
                 break;
 
             case R.id.keepPlaying_cb:
 
-                PlayerService.startActionKeepPlaying(this,position,((CheckBox)view).isChecked());
+                PlayerService.startActionKeepPlaying(this, position, ((CheckBox) view).isChecked());
 
 
                 break;
         }
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent myService = new Intent(this, PlayerService.class);
+        stopService(myService);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+//        noInternetDialog.onDestroy();
+        noInternetDialog.destroy();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable("activityModel", activityModel);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState.containsKey("activityModel")) {
+            activityModel = savedInstanceState.getParcelable("activityModel");
+        }
     }
 
     private static class GuiReceiver extends BroadcastReceiver {
@@ -397,40 +440,41 @@ private NoInternetDialog noInternetDialog;
                     playerActivity.songText.setText(playerActivity.activityModel.getListOfBlogsUI().get(num).getTitle());
 
                 }
+
+                if (intent.hasExtra(PlayerService.PLAYER_IS_PLAYING)) {
+                    playerActivity.activityModel.setPlaying(intent.getBooleanExtra(PlayerService.PLAYER_IS_PLAYING, false));
+
+                }
             }
+            if (intent.getAction().equals(PlayerService.PAUSE_ACTION)) {
+                playerActivity.activityModel.setPlaying(false);
+
+            }
+            if (intent.getAction().equals(PlayerService.PLAY_ACTION)) {
+                playerActivity.activityModel.setPlaying(true);
+            }
+
+            if (intent.getAction().equals(PlayerService.COMPLETE_ACTION)) {
+                playerActivity.activityModel.setPlaying(false);
+            }
+
+            if (intent.getAction().equals(PlayerService.NEXT_ACTION)) {
+                if (intent.hasExtra(PlayerService.PLAYER_IS_PLAYING)) {
+                    playerActivity.activityModel.setPlaying(intent.getBooleanExtra(PlayerService.PLAYER_IS_PLAYING, false));
+                }
+            }
+
+            if (intent.getAction().equals(PlayerService.PREVIOUS_ACTION)) {
+                if (intent.hasExtra(PlayerService.PLAYER_IS_PLAYING)) {
+                    playerActivity.activityModel.setPlaying(intent.getBooleanExtra(PlayerService.PLAYER_IS_PLAYING, false));
+                }
+            }
+            // we should handle error if he is a bad boy :D
             if (intent.getAction().equals(PlayerService.DELETE_ACTION))
                 if (playerActivity != null)
                     playerActivity.finish();
                 else
                     PlayerService.startActionSendInfoBroadcast(playerActivity);
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        Intent myService = new Intent(this, PlayerService.class);
-        stopService(myService);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-//        noInternetDialog.onDestroy();
-        noInternetDialog.destroy();
-    }
-
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelable("activityModel",activityModel);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        if(savedInstanceState.containsKey("activityModel")){
-            activityModel = savedInstanceState.getParcelable("activityModel");
         }
     }
 }

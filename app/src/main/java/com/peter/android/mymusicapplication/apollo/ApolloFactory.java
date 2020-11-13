@@ -1,7 +1,5 @@
 package com.peter.android.mymusicapplication.apollo;
 
-import android.content.Context;
-
 import com.apollographql.apollo.ApolloClient;
 
 public class ApolloFactory {
@@ -13,7 +11,7 @@ public class ApolloFactory {
 
         if (apolloClient == null) {
 
-             apolloClient = ApolloClient.builder()
+            apolloClient = ApolloClient.builder()
                     .serverUrl(BASE_URL)
                     .build();
 

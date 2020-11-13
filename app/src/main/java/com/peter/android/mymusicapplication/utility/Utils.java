@@ -13,9 +13,9 @@ import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
-import com.peter.android.mymusicapplication.R;
 import com.peter.android.mymusicapplication.broadcast.InternetBroadCastReceiver;
 
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -24,6 +24,12 @@ import java.util.Locale;
 
 public class Utils {
     public static volatile boolean isConnected = false;
+    public static InternetBroadCastReceiver receiver = new InternetBroadCastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            isConnected = isNetworkAvailable(context);
+        }
+    };
 
     public static Date getDate(String date) {
 //                                                          2020-11-08T20:09:26.681745+00:00
@@ -40,15 +46,8 @@ public class Utils {
         return DateFormat.getDateTimeInstance().format(publishedAt);
     }
 
-    public static InternetBroadCastReceiver receiver = new InternetBroadCastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            isConnected = isNetworkAvailable(context);
-        }
-    };
-
     public static boolean isNetworkAvailable(Context context) {
-        if(context == null)  return false;
+        if (context == null) return false;
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager != null) {
             if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -70,10 +69,10 @@ public class Utils {
         return false;
     }
 
-    public static Bitmap getFromVector(Context context,int id) {
+    public static Bitmap getFromVector(Context context, int id) {
 
         try {
-            Drawable drawable = ContextCompat.getDrawable(context,id);
+            Drawable drawable = ContextCompat.getDrawable(context, id);
             Bitmap bitmap;
             bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
@@ -84,5 +83,11 @@ public class Utils {
             // Handle the error
             return null;
         }
+    }
+
+    public static BigDecimal round(double d, int decimalPlace) {
+        BigDecimal bd = new BigDecimal(Double.toString(d));
+        bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
+        return bd;
     }
 }

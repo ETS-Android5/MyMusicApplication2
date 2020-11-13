@@ -2,11 +2,6 @@ package com.peter.android.mymusicapplication.models;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.widget.SeekBar;
-import android.widget.TextView;
-
-import com.peter.android.mymusicapplication.LoadSomePostsQuery;
-import com.peter.android.mymusicapplication.Song;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +21,7 @@ public class AudioPlayerActivityModel  extends Observable implements Parcelable 
         sbProgressValue = in.readInt();
         tvTimeString = in.readString();
         tvDurationString = in.readString();
+        playing = in.readInt() == 1;
     }
 
     public static final Creator<AudioPlayerActivityModel> CREATOR = new Creator<AudioPlayerActivityModel>() {
@@ -50,6 +46,20 @@ public class AudioPlayerActivityModel  extends Observable implements Parcelable 
     private int sbProgressValue=-1;
     private String tvTimeString="";
     private String tvDurationString="";
+    private boolean playing = false;
+
+    public boolean setPlaying(boolean playing) {
+        if(playing != this.playing) {
+            this.playing = playing;
+            setChanged();
+            notifyObservers();
+            return true;
+        }else return false;
+    }
+
+    public boolean isPlaying(){
+        return this.playing;
+    }
 
     public ArrayList<AudioBlogModel> getListOfBlogsUI() {
         return listOfBlogsUI;
@@ -149,5 +159,6 @@ if(this.currentAudioBlog == null || this.currentAudioBlog.equals(currentAudioBlo
         parcel.writeInt(sbProgressValue);
         parcel.writeString(tvTimeString);
         parcel.writeString(tvDurationString);
+        parcel.writeInt(this.playing?1:0);
     }
 }

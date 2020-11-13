@@ -80,7 +80,7 @@
         vumeter:vumeter_blockNumber="4"
         vumeter:vumeter_blockSpacing="1dp"
         vumeter:vumeter_backgroundColor="@color/purple"
-        vumeter:vumeter_startOff="false"
+        vumeter:vumeter_startOff="true"
         app:layout_constraintStart_toEndOf="@+id/audio_iv"
         app:layout_constraintTop_toTopOf="@+id/audio_iv"
         android:visibility="visible" />

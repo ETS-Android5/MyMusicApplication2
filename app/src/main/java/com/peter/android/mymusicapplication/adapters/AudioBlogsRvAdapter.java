@@ -2,7 +2,6 @@ package com.peter.android.mymusicapplication.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
@@ -14,10 +13,10 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-
 import com.bumptech.glide.request.RequestOptions;
 import com.peter.android.mymusicapplication.R;
 import com.peter.android.mymusicapplication.models.AudioBlogModel;
+import com.peter.android.mymusicapplication.utility.Utils;
 
 import java.util.List;
 
@@ -30,16 +29,18 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
     private List<AudioBlogModel> audioBlogModels;
     private Context context;
     private AudioBlogModel selectedaudioBlogModel;
-    private int selectedPosition  =-1;
+    private int selectedPosition = -1;
+    //declare interface
+    private OnItemClicked onClickListener;
 
-    public AudioBlogsRvAdapter(@NonNull List<AudioBlogModel> audioBlogModels,int selected, Context context,@NonNull OnItemClicked onClickListener) {
+    public AudioBlogsRvAdapter(@NonNull List<AudioBlogModel> audioBlogModels, int selectedPosition, Context context, @NonNull OnItemClicked onClickListener) {
         this.audioBlogModels = audioBlogModels;
         this.context = context;
         mRequestOptions = new RequestOptions().placeholder(R.drawable.loading_animation)
                 .error(R.drawable.ic_broken_image);
         this.onClickListener = onClickListener;
-        if(selectedPosition !=-1){
-            selectedaudioBlogModel=audioBlogModels.get(selectedPosition);
+        if (selectedPosition != -1) {
+            selectedaudioBlogModel = audioBlogModels.get(selectedPosition);
         }
     }
 
@@ -54,53 +55,53 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
     public void onBindViewHolder(@NonNull AudioBlogViewHolder holder, int position) {
 
         AudioBlogModel audioBlogModel = audioBlogModels.get(position);
-        holder.view.setBackgroundColor(ContextCompat.getColor(context,android.R.color.white));
-        if(position==selectedPosition||audioBlogModel.isSelected()||audioBlogModel.equals(selectedaudioBlogModel)){
-            holder.name.setTextColor(ContextCompat.getColor(context,R.color.purple));
+        holder.view.setBackgroundColor(ContextCompat.getColor(context, android.R.color.white));
+        if (position == selectedPosition || audioBlogModel.isSelected() || audioBlogModel.equals(selectedaudioBlogModel)) {
+            holder.name.setTextColor(ContextCompat.getColor(context, R.color.purple));
             holder.vuMeterView.setVisibility(View.VISIBLE);
             holder.vuMeterView.resume(true);
-        }else{
-            holder.name.setTextColor(ContextCompat.getColor(context,R.color.black));
+        } else {
+            holder.name.setTextColor(ContextCompat.getColor(context, R.color.black));
             holder.vuMeterView.stop(true);
             holder.vuMeterView.setVisibility(View.GONE);
         }
         holder.name.setText(audioBlogModel.getAudioFileName());
-        holder.size.setText(String.format("%s Mb", Math.floor(audioBlogModel.getAudioSize()/(1024*1024))));
+        holder.size.setText(String.format("%s Mb", Utils.round(audioBlogModel.getAudioSize() / Math.pow(1024, 2), 2)));
         holder.year.setText(audioBlogModel.getReadableFormat());
         holder.keepListening.setChecked(audioBlogModel.isKeepListening());
         holder.view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // handle externally
-                onClickListener.onItemClick(view,position);
+                onClickListener.onItemClick(view, position);
             }
         });
         holder.year.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // handle externally
-                onClickListener.onItemClick(view,position);
+                onClickListener.onItemClick(view, position);
             }
         });
         holder.size.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // handle externally
-                onClickListener.onItemClick(view,position);
+                onClickListener.onItemClick(view, position);
             }
         });
         holder.name.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // handle externally
-                onClickListener.onItemClick(view,position);
+                onClickListener.onItemClick(view, position);
             }
         });
         holder.keepListening.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 audioBlogModel.setKeepListening(b);
-                onClickListener.onItemClick(compoundButton,position);
+                onClickListener.onItemClick(compoundButton, position);
             }
         });
 
@@ -111,6 +112,18 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
     @Override
     public int getItemCount() {
         return audioBlogModels.size();
+    }
+
+    public void setSelected(int position) {
+        this.selectedaudioBlogModel = audioBlogModels.get(position);
+        selectedaudioBlogModel.setSelected(true);
+        this.selectedPosition = position;
+        notifyDataSetChanged();
+    }
+
+    //make interface like this
+    public interface OnItemClicked {
+        void onItemClick(View view, int position);
     }
 
     static class AudioBlogViewHolder extends RecyclerView.ViewHolder {
@@ -134,21 +147,6 @@ public class AudioBlogsRvAdapter extends RecyclerView.Adapter<AudioBlogsRvAdapte
             keepListening = itemView.findViewById(R.id.keepPlaying_cb);
             vuMeterView = itemView.findViewById(R.id.play_state);
         }
-    }
-
-    //declare interface
-    private OnItemClicked onClickListener;
-
-    //make interface like this
-    public interface OnItemClicked {
-        void onItemClick(View view,int position);
-    }
-
-    public void setSelected(int position){
-        this.selectedaudioBlogModel = audioBlogModels.get(position);
-        selectedaudioBlogModel.setSelected(true);
-        this.selectedPosition = position;
-        notifyDataSetChanged();
     }
 
 
