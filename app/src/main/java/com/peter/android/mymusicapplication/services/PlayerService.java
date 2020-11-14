@@ -408,6 +408,8 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     private void cancelNotification() {
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancel(345);
+                    stopForeground(true);
+
     }
 
     private void initMediaSession() {
@@ -667,13 +669,13 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         extras.putInt(MediaMetadataCompat.METADATA_KEY_DURATION, -1);
         builder.setExtras(extras);
 
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (player.isPlaying()) {
+ //       NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+//        if (player.isPlaying()) {
             startForeground(345, builder.build());
-        } else {
-            stopForeground(false);
-            mNotificationManager.notify(345, builder.build());
-        }
+//        } else {
+//            stopForeground(false);
+//            mNotificationManager.notify(345, builder.build());
+//        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)

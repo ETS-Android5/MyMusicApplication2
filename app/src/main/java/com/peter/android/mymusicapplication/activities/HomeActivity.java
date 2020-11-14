@@ -106,7 +106,7 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
                     } else {
                         if (isMyServiceRunning(PlayerService.class)) {
                             PlayerService.startActionPause(HomeActivity.this);
-                            PlayerService.startCancelNotification(HomeActivity.this);
+                            PlayerService.startCancelNotification(HomeActivity.this);// prevent user from play outside the internet
                         }
                     }
                 }
