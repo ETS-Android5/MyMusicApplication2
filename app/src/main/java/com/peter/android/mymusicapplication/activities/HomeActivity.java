@@ -392,17 +392,20 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
     @Override
     public void onBackPressed() {
         try {
+            super.onBackPressed();
             PlayerService.startCancelNotification(HomeActivity.this);
-            Intent myService = new Intent(this, PlayerService.class);
-            stopService(myService);
+
+            PlayerService.startActionKillService(getApplicationContext());
 
             OnClearFromRecentService.startActionClose(getApplicationContext());
             this.finish();
-            android.os.Process.killProcess(android.os.Process.myPid());
 
-            super.onBackPressed();
+
+
         } catch (Exception e) {
             // we killed the process no need to be concerned
+        }finally {
+            activityModel = null;
         }
     }
 

@@ -86,6 +86,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     private static final String ACTION_PREVIOUS = "mediaplayer.peter.mediaplayerpeter.action.ACTION_PREVIOUS";
     private static final String ACTION_SEND_INFO = "mediaplayer.peter.mediaplayerpeter.action.ACTION_SEND_INFO";
     private static final String ACTION_SEEK_TO = "mediaplayer.peter.mediaplayerpeter.action.ACTION_SEEK_TO";
+    private static final String ACTION_KILL_SERVICE = "mediaplayer.peter.mediaplayerpeter.action.ACTION_KILL_SERVICE";
     private static final String EXTRA_PARAM1 = "mediaplayer.peter.mediaplayerpeter.PARAM1";
     private static final String EXTRA_PARAM2 = "mediaplayer.peter.mediaplayerpeter.PARAM2";
     private static final String EXTRA_PARAM3 = "mediaplayer.peter.mediaplayerpeter.PARAM3";
@@ -263,6 +264,12 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         context.startService(intent);
     }
 
+    public static void startActionKillService(Context context) {
+        Intent intent = new Intent(context, PlayerService.class);
+        intent.setAction(ACTION_KILL_SERVICE);
+        context.startService(intent);
+    }
+
 //    private void handleActionSetPlaylist(String playlistName, int songPos) {
 //        playlist = PlaylistHandler.getPlaylist(this, playlistName);
 //        songPosition = songPos;
@@ -355,6 +362,11 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
                 cancelNotification();// if internet is down better to close notifiaction
             }
 
+            if(intent.getAction().equals(ACTION_KILL_SERVICE)){
+                stopForeground(true);
+                PlayerService.this.stopSelf();
+            }
+
             if (intent.getAction().equals(ACTION_PREVIOUS)) {
                 if (player != null)
                     previousSong(player.isPlaying());
@@ -374,16 +386,20 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
         if (isNoisyReceiverRegistered)
             unregisterReceiver(noisyReceiver);
 
-        if (player != null)
-            player.release();
+//        if (player != null) {
+            killPlayer();
+//        }
 
-        isUpdatingThread = false;
+//        isUpdatingThread = false;
         stopForeground(true);
-        abandonAudioFocus();
+//        abandonAudioFocus();
         cancelNotification();
         unregisterReceiver(screenReceiver);
         mediaSessionCompat.setActive(false);
         mediaSessionCompat.release();
+        if(countUpTimer != null) {
+            countUpTimer.reset();
+        }
     }
 
     private void sendInfoBroadcast() {
