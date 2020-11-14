@@ -33,6 +33,13 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".services.OnClearFromRecentService"
+            android:enabled="true"
+            android:exported="false"
+            android:stopWithTask="false"
+            />
+
         <receiver android:name="androidx.media.session.MediaButtonReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />

@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -17,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -25,12 +27,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.apollographql.apollo.ApolloCall;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
+import com.google.android.material.button.MaterialButton;
 import com.peter.android.mymusicapplication.LoadSomePostsQuery;
 import com.peter.android.mymusicapplication.R;
 import com.peter.android.mymusicapplication.adapters.AudioBlogsRvAdapter;
 import com.peter.android.mymusicapplication.apollo.ApolloFactory;
 import com.peter.android.mymusicapplication.models.AudioBlogModel;
 import com.peter.android.mymusicapplication.models.AudioPlayerActivityModel;
+import com.peter.android.mymusicapplication.services.OnClearFromRecentService;
 import com.peter.android.mymusicapplication.services.PlayerService;
 
 import org.imaginativeworld.oopsnointernet.ConnectionCallback;
@@ -60,6 +64,7 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
     // No Internet Dialog
     private NoInternetDialog noInternetDialog;
     private ProgressDialog progressDialog;
+    private MaterialButton playBtn;
 
     private static String getTimeString(int totalTime) {
         long s = totalTime % 60;
@@ -81,6 +86,7 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
             activityModel = savedInstanceState.getParcelable("activityModel");
         }
         setContentView(R.layout.activity_home);
+        OnClearFromRecentService.startActionOpen(getApplicationContext());
         createProgressDialog();// loading dialog
         // No Internet Dialog
         NoInternetDialog.Builder builder1 = new NoInternetDialog.Builder(this);
@@ -261,6 +267,18 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 //                setTime(time);
 //            }
 //        });
+        playBtn = findViewById(R.id.button);
+        if(activityModel.isPlaying()){
+            if(playBtn.getTag()==null ||!playBtn.getTag().equals("Play")) {
+                playBtn.setIcon(ContextCompat.getDrawable(HomeActivity.this, R.drawable.ic_pause));
+                playBtn.setTag("Play");
+            }
+        }else{
+            if(playBtn.getTag()==null ||!playBtn.getTag().equals("Play")) {
+                playBtn.setIcon(ContextCompat.getDrawable(HomeActivity.this, R.drawable.ic_play_arrow));
+                playBtn.setTag("Pause");
+            }
+        }
     }
 
     @Override
@@ -308,6 +326,14 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
         super.onPause();
         if (receiver != null)
             unregisterReceiver(receiver);
+    }
+
+    public void onPlayOrPause(View view){
+       if(activityModel.isPlaying()){
+           PlayerService.startActionPause(this);
+       }else{
+           PlayerService.startActionPlay(this);
+       }
     }
 
     public void play(View view) {
@@ -365,9 +391,17 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        Intent myService = new Intent(this, PlayerService.class);
-        stopService(myService);
+try {
+    Intent myService = new Intent(this, PlayerService.class);
+    stopService(myService);
+    OnClearFromRecentService.startActionClose(getApplicationContext());
+    this.finish();
+    android.os.Process.killProcess(android.os.Process.myPid());
+
+    super.onBackPressed();
+}catch (Exception e){
+    // we killed the process no need to be concerned
+}
     }
 
     @Override
@@ -443,7 +477,6 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 
                 if (intent.hasExtra(PlayerService.PLAYER_IS_PLAYING)) {
                     playerActivity.activityModel.setPlaying(intent.getBooleanExtra(PlayerService.PLAYER_IS_PLAYING, false));
-
                 }
             }
             if (intent.getAction().equals(PlayerService.PAUSE_ACTION)) {
@@ -467,6 +500,17 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
             if (intent.getAction().equals(PlayerService.PREVIOUS_ACTION)) {
                 if (intent.hasExtra(PlayerService.PLAYER_IS_PLAYING)) {
                     playerActivity.activityModel.setPlaying(intent.getBooleanExtra(PlayerService.PLAYER_IS_PLAYING, false));
+                }
+            }
+            if(playerActivity.activityModel.isPlaying()){
+                if(playerActivity.playBtn.getTag()==null ||!playerActivity.playBtn.getTag().equals("Play")) {
+                    playerActivity.playBtn.setIcon(ContextCompat.getDrawable(playerActivity, R.drawable.ic_pause));
+                    playerActivity.playBtn.setTag("Play");
+                }
+            }else{
+                if(playerActivity.playBtn.getTag()==null ||!playerActivity.playBtn.getTag().equals("Pause")) {
+                    playerActivity.playBtn.setIcon(ContextCompat.getDrawable(playerActivity, R.drawable.ic_play_arrow));
+                    playerActivity.playBtn.setTag("Pause");
                 }
             }
             // we should handle error if he is a bad boy :D

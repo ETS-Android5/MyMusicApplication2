@@ -972,5 +972,10 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
             return PlayerServiceBinder.this;
         }
     }
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        stopSelf();
+    }
 
 }
