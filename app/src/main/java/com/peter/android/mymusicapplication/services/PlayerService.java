@@ -489,9 +489,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
                 if (player.isPlaying())
                     countUpTimer.resume();
             }
-            if (player.getExoPlayer().getCurrentWindowIndex() < position) {
-                player.seekTo(position, 0);
-            } else if (player.getExoPlayer().getCurrentWindowIndex() > position) {
+            if (player.getExoPlayer().getCurrentWindowIndex() != position) {
                 player.seekTo(position, 0);
             } else {
                 seekTo(0);

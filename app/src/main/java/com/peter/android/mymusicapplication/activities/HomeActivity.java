@@ -444,6 +444,7 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
             if (intent.getAction().equals(PlayerService.GUI_UPDATE_ACTION)) {
                 if (intent.hasExtra(PlayerService.TOTAL_TIME_VALUE_EXTRA)) {
                     int totalTime = intent.getIntExtra(PlayerService.TOTAL_TIME_VALUE_EXTRA, 0) / 1000;
+                    Log.e("Total Time",totalTime+"");
                     if (playerActivity.sbProgress != null)
                         playerActivity.sbProgress.setMax(totalTime);
                     String stringTotalTime = getTimeString(totalTime);
@@ -464,6 +465,11 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
                     }
                     if (playerActivity.tvTime != null)
                         playerActivity.tvTime.setText(time);
+                    // when we select random song player isn't ready to say the whole time yet(buffering) but it can say time spend so far
+                    // as a work around we will ask player each time he send a progress about song total time
+                    // some files also may have brocken ending and we need to know how we gonna recognise that
+                    if(playerActivity.tvDuration.getText().equals(getTimeString(0))&&actualTime != 0)
+                    PlayerService.startActionSendInfoBroadcast(playerActivity);// should we try for an exact time
                 }
 
                 if (intent.hasExtra(PlayerService.COVER_URL_EXTRA)) {
@@ -483,6 +489,9 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
                 if (intent.hasExtra(PlayerService.PLAYER_IS_PLAYING)) {
                     playerActivity.activityModel.setPlaying(intent.getBooleanExtra(PlayerService.PLAYER_IS_PLAYING, false));
                 }
+            }
+            if (intent.getAction().equals(PlayerService.SELECT_ACTION)) {
+                PlayerService.startActionSendInfoBroadcast(playerActivity);
             }
             if (intent.getAction().equals(PlayerService.PAUSE_ACTION)) {
                 playerActivity.activityModel.setPlaying(false);
