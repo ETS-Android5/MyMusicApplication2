@@ -164,6 +164,7 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
                     if (!isMyServiceRunning(PlayerService.class)) {
                         PlayerService.startActionSetPlaylist(HomeActivity.this, activityModel);
                         PlayerService.startActionSelectAudio(HomeActivity.this, 0);
+                        PlayerService.startActionPause(HomeActivity.this);// saying our state after loading
                     }
 
                     if (receiver == null) {
