@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -268,13 +267,13 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 //            }
 //        });
         playBtn = findViewById(R.id.button);
-        if(activityModel.isPlaying()){
-            if(playBtn.getTag()==null ||!playBtn.getTag().equals("Play")) {
+        if (activityModel.isPlaying()) {
+            if (playBtn.getTag() == null || !playBtn.getTag().equals("Play")) {
                 playBtn.setIcon(ContextCompat.getDrawable(HomeActivity.this, R.drawable.ic_pause));
                 playBtn.setTag("Play");
             }
-        }else{
-            if(playBtn.getTag()==null ||!playBtn.getTag().equals("Play")) {
+        } else {
+            if (playBtn.getTag() == null || !playBtn.getTag().equals("Play")) {
                 playBtn.setIcon(ContextCompat.getDrawable(HomeActivity.this, R.drawable.ic_play_arrow));
                 playBtn.setTag("Pause");
             }
@@ -328,12 +327,12 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
             unregisterReceiver(receiver);
     }
 
-    public void onPlayOrPause(View view){
-       if(activityModel.isPlaying()){
-           PlayerService.startActionPause(this);
-       }else{
-           PlayerService.startActionPlay(this);
-       }
+    public void onPlayOrPause(View view) {
+        if (activityModel.isPlaying()) {
+            PlayerService.startActionPause(this);
+        } else {
+            PlayerService.startActionPlay(this);
+        }
     }
 
     public void play(View view) {
@@ -391,17 +390,19 @@ public class HomeActivity extends AppCompatActivity implements AudioBlogsRvAdapt
 
     @Override
     public void onBackPressed() {
-try {
-    Intent myService = new Intent(this, PlayerService.class);
-    stopService(myService);
-    OnClearFromRecentService.startActionClose(getApplicationContext());
-    this.finish();
-    android.os.Process.killProcess(android.os.Process.myPid());
+        try {
+            PlayerService.startCancelNotification(HomeActivity.this);
+            Intent myService = new Intent(this, PlayerService.class);
+            stopService(myService);
 
-    super.onBackPressed();
-}catch (Exception e){
-    // we killed the process no need to be concerned
-}
+            OnClearFromRecentService.startActionClose(getApplicationContext());
+            this.finish();
+            android.os.Process.killProcess(android.os.Process.myPid());
+
+            super.onBackPressed();
+        } catch (Exception e) {
+            // we killed the process no need to be concerned
+        }
     }
 
     @Override
@@ -502,13 +503,13 @@ try {
                     playerActivity.activityModel.setPlaying(intent.getBooleanExtra(PlayerService.PLAYER_IS_PLAYING, false));
                 }
             }
-            if(playerActivity.activityModel.isPlaying()){
-                if(playerActivity.playBtn.getTag()==null ||!playerActivity.playBtn.getTag().equals("Play")) {
+            if (playerActivity.activityModel.isPlaying()) {
+                if (playerActivity.playBtn.getTag() == null || !playerActivity.playBtn.getTag().equals("Play")) {
                     playerActivity.playBtn.setIcon(ContextCompat.getDrawable(playerActivity, R.drawable.ic_pause));
                     playerActivity.playBtn.setTag("Play");
                 }
-            }else{
-                if(playerActivity.playBtn.getTag()==null ||!playerActivity.playBtn.getTag().equals("Pause")) {
+            } else {
+                if (playerActivity.playBtn.getTag() == null || !playerActivity.playBtn.getTag().equals("Pause")) {
                     playerActivity.playBtn.setIcon(ContextCompat.getDrawable(playerActivity, R.drawable.ic_play_arrow));
                     playerActivity.playBtn.setTag("Pause");
                 }

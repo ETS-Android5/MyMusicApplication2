@@ -975,6 +975,7 @@ public class PlayerService extends MediaBrowserServiceCompat implements AudioMan
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
+        cancelNotification();
         stopSelf();
     }
 
